@@ -1,33 +1,38 @@
-# NSW DPC Silverstripe module skeleton
+# Inline linking field for Silverstripe
 
-This is a skeleton used for NSWDPC published Silverstripe modules. It is based on [The official 'Silverstripe supported module skeleton'](https://github.com/silverstripe/silverstripe-module) with added defaults based on the [recommended structure](https://docs.silverstripe.org/en/4/getting_started/directory_structure/#custom-code-structure).
+This module provides a basic **inline** linking field, saving into the Link model provided by gorriecoe/silverstripe-link
 
-### Usage
+Rather than take the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
 
-- Clone this repository into a directory and cd into it
-- Remove the ```.git``` directory and run a ```git init``` to create a repo
-- Rename the working directory to reflect your module
-- Update required module files to reflect your intentions
-- Remove .gitkeep files as required
-- Update this README.md with relevant changes for your project
-- Update docs/en/001_index.md as required, add more docs if required
-- Add your name/organisation to `LICENSE.md`
-- Edit [composer.json](./composer.json) with your requirements including package name and description.
-- Update/remove `require`,`require-dev`,`suggest`,`replace`,`authors`,`support`,`keywords` as required
-- Edit [phpunit.xml.dist](./phpunit.xml.dist) and update the testsuite name attribute to be your project name
-- Add and push to a VCS repository
-- Either [publish](https://getcomposer.org/doc/02-libraries.md#publishing-to-packagist) the module on packagist.org, or add a [custom repository](https://getcomposer.org/doc/02-libraries.md#publishing-to-a-vcs) to your project's `composer.json`
-- Require the module using composer to include it in your project
+- Choose a current link record
+- Enter an external URL
+- Email address
+- Internal page
+- Existing file asset
+- Phone
+
+The object of this module is to:
+
+- have no Javascript dependencies, beyond those provided by core framework fields.
+- act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only), using Injector.
+
 
 ## Requirements
 
-The recommended way of installing this module is via [composer](https://getcomposer.org/download/)
+See [composer.json](./composer.json)
 
-> You should detail any specific module requirements here and point to the composer.json file
+```
+"gorriecoe/silverstripe-linkfield": "^1.0.0",
+"burnbright/silverstripe-externalurlfield" : "^0.3"
+```
 
 ## Installation
 
-> Add any specific installation requirements here beyond composer, such as configuration of API keys, Admin activities and the like
+The recommended way of installing this module is via [composer](https://getcomposer.org/download/)
+
+```
+composer require nswdpc/silverstripe-inline-linker
+```
 
 ## License
 
@@ -37,17 +42,13 @@ The recommended way of installing this module is via [composer](https://getcompo
 
 * [Documentation](./docs/en/001_index.md)
 
-> Further English language documentation should be included in the file above or linked to from that file
-
 ## Configuration
 
-> Add project configuration examples
+None, yet
 
 ## Maintainers
 
 + [dpcdigital@NSWDPC:~$](https://dpc.nsw.gov.au)
-
-> Add additional maintainers here and/or include [authors in composer](https://getcomposer.org/doc/04-schema.md#authors)
 
 ## Bugtracker
 
