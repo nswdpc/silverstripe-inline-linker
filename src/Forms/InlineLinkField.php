@@ -5,59 +5,225 @@ namespace NSWDPC\InlineLinker;
 use SilverStripe\Forms\HeaderField;
 use BurnBright\ExternalURLField\ExternalURLField;
 use gorriecoe\Link\Models\Link;
-use gorriecoe\LinkField\LinkField;
 use SilverStripe\Assets\File;
 use SilverStripe\CMS\Model\SiteTree;
-use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\EmailField;
-use SilverStripe\Forms\FormField;
-use SilverStripe\Forms\TextField;
-use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\DropdownField;
+use SilverStripe\Forms\EmailField;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormField;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\Tab;
+use SilverStripe\Forms\Tabset;
+use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TreeDropdownField;
-use SilverStripe\Forms\ToggleCompositeField;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\View\Requirements;
 
 /**
- * Inline link field
+ * The Inline link field extends TabSet, provides child fields that
+ * save to the gorriecode/link model
  */
-class InlineLinkField extends LinkField {
+class InlineLinkField extends TabSet {
 
-    protected $schemaDataType = FormField::SCHEMA_DATA_TYPE_STRUCTURAL;
+    /**
+     * @var gorriecoe\Link\Models\Link|null
+     */
+    protected $record;
 
-    /** @skipUpgrade */
-    protected $schemaComponent = 'CompositeField';
-
-    private static $field_index_name = "InlineLink";
+    /**
+     * @var SilverStripe\ORM\DataObject|null
+     */
+    protected $parent;
 
     public function __construct($name, $title, $parent)
     {
-        parent::__construct($name, $title, $parent);
+        // set name and title early
+        $this->name = $name;
+        $this->title = $title;
+
+        // store record and parent
+        if($parent instanceof DataObject && $parent->hasMethod($name)) {
+            $this->parent = $parent;
+            $link = $this->parent->{$name}();
+            if($link instanceof Link) {
+                $this->record = $link;
+            }
+        }
+        // get all available fields
+        $tabs = $this->getAvailableFields();
+        parent::__construct($name, $title, $tabs);
     }
 
     /**
-     * Return a prefixed field name
-     * @return string
+     * Once a record is created, the ID value of the Link is the data value for saving
+     * @return mixed
      */
-    protected function prefixedFieldName($name) {
-        $index = $this->config()->get('field_index_name');
-        return $this->getName() . "[{$index}][{$name}]";
+    public function dataValue() {
+        if($this->record instanceof Link) {
+            return $this->record->ID;
+        } else {
+            return null;
+        }
     }
 
-    public function getHasOneField() {
-        $field = InlineLinkCompositeField::create(
-            FieldList::create( $this->getAvailableFields() )
-        )->setDescription(
-            _t(
-                __CLASS__ . ".SELECT_A_TYPE_OF_LINK",
-                "Select the type of link you would like to create. The first link provided is saved."
-            )
-        );
-        $field->setName( $this->getName() . "_Composite" );
-        // this field's form on all child fields of the Composite
-        $field->setForm($this->getForm());
-        return $field;
+    /**
+     * This is called just prior to saveInto, set submitted values on child fields
+     * to allow saveInto to update/create a link
+     *
+     * @param mixed $value
+     * @param array|DataObject $data
+     * @return $this
+     */
+    public function setSubmittedValue($values, $data = null)
+    {
+        if(!is_array($values)) {
+            // unexpected
+            return false;
+        }
+        foreach($values as $key => $value) {
+            if($field = $this->children->dataFieldByName( $this->prefixedFieldName( $key ) )) {
+                $field->setSubmittedValue( $value );
+            }
+        }
+    }
+
+    public function hasData() {
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function saveInto(DataObjectInterface $record)
+    {
+        $children = $this->getChildren()->dataFields();
+        foreach($children as $field) {
+            $name = $field->getName();
+            $value = $field->dataValue();
+            if(!$value) {
+                continue;
+            }
+            if($link = $this->createOrAssociateLink($field)) {
+                if(!$link->exists()) {
+                    $link->Title = "Link for record " . $this->parent->getTitle();
+                    $link->write();
+                }
+                $this->record = $link;
+                // save the link id
+                $this->parent->setField($this->getName() . "ID", $link->ID);
+            }
+            // only save the first value
+            break;
+        }
+    }
+
+    /**
+     * Create or save a link using the value from the form field
+     * @param FormField the child field carrying the value to be saved
+     */
+    protected function createOrAssociateLink(FormField $field) {
+        $type = $this->getTypeFromName($field->getName());
+        $value = $field->dataValue();
+        $record = [];
+        switch($type) {
+            case 'Link':
+                // pre-existing Link record
+                $record = [
+                    'LinkID' => $value,
+                    'Type' => $this->getLinkTypeLink()
+                ];
+                break;
+            case 'SiteTree':
+                $record = [
+                    'SiteTreeID' => $value,
+                    'Type' => 'SiteTree',
+                ];
+                break;
+            case 'File':
+                $record = [
+                    'FileID' => $value,
+                    'Type' => 'File'
+                ];
+                break;
+            case 'URL':
+                $record = [
+                    'URL' => $value,
+                    'Type' => 'URL'
+                ];
+                break;
+            case 'Email':
+                $record = [
+                    'Email' => $value,
+                    'Type' => 'Email'
+                ];
+                break;
+            case 'Phone':
+                $record = [
+                    'Phone' => $value,
+                    'Type' => 'Phone'
+                ];
+                break;
+            case 'URL':
+                $record = [
+                    'URL' => $value,
+                    'Type' => 'URL'
+                ];
+                break;
+            default:
+                throw new \Exception("Unknown type {$type}");
+                break;
+        }
+
+        $link = Link::get()->filter(
+            $record
+        )->first();
+        if($link && $link->exists()) {
+            // matches existing Link record
+            return $link;
+        }
+
+        $link = Link::create($record);
+        return $link;
+    }
+
+    /**
+     * Set the current link record
+     */
+    public function setRecord(Link $record) {
+        $this->record = $record;
+    }
+
+    /**
+     * Get the current link record, if any
+     * @return mixed null|Link
+     */
+    public function getRecord() {
+        return $this->record;
+    }
+
+    /**
+     * Return a prefixed field name, e./g LinkTarget[Email]
+     * @param string $type the type of the link
+     * @return string
+     */
+    protected function prefixedFieldName($type) {
+        return $this->getName() . "[{$type}]";
+    }
+
+    /**
+     * Work out the type based on the field name, the type is the last index
+     * @return string
+     */
+    protected function getTypeFromName($complete_field_name) {
+        $result = [];
+        $name = $this->getName();
+        parse_str($complete_field_name, $results);
+        if(isset($results[ $name ])) {
+            $target = $results[ $name ];
+            $type = key($target);
+        }
+        return $type;
     }
 
     /**
@@ -66,227 +232,143 @@ class InlineLinkField extends LinkField {
      */
     protected function getAvailableFields() {
 
-        $fields = [];
+        $fields = FieldList::create();
         $links = Link::get()->sort('Title ASC');
-        if($this->record->exists()) {
 
+        if($this->record && $this->record->exists()) {
             $links = $links->exclude("ID", $this->record->ID);
-
-            $fields[] = HeaderField::create(
-                $this->prefixedFieldName('CurrentLinkDetails'),
-                _t(__CLASS__ . ".CURRENT_LINK_DETAILS", "Current link"),
-                3
+            $fields->push(
+                Tab::create(
+                    'Current',
+                    _t(__CLASS__ . '.THE_CURRENT_LINK', 'Current')
+                )
             );
 
-            $fields[] = LiteralField::create(
-                $this->prefixedFieldName('Existing'),
-                '<p class="message info">'
-                    . "<strong>" . _t(__CLASS__ . ".CURRENT_VALUE", "Title") . "</strong>: " . $this->record->Title
-                    . "<br>"
-                    . "<strong>" . _t(__CLASS__ . ".CURRENT_VALUE", "Link") . "</strong>: " . $this->record->getLinkURL()
-                    . "<br>"
-                    . "<strong>" . _t(__CLASS__ . ".CURRENT_TYPE", "Type") . "</strong>: " . $this->record->Type
-                 . '</p>'
-            );
-
-            $toggle_title = _t(__CLASS__ . ".REPLACE_THIS_LINK_BELOW", "Replace this link");
-
-        } else {
-
-            $toggle_title = "Choose and save a link";
-
-        }
-
-        $fields[] = ToggleCompositeField::create(
-            $this->prefixedFieldName('LinkToggler'),
-            $toggle_title,
-            [
-                // existing link
-                DropdownField::create(
-                    $this->prefixedFieldName('Link'),
-                    'Existing link',
-                    $links->map('ID','TypeWithURL')->toArray()
-                )->setEmptyString(''),
-
-                // external URL
-                ExternalURLField::create(
-                    $this->prefixedFieldName('URL'),
-                    'External URL'
-                )->setConfig([
-                    'html5validation' => true,
-                    'defaultparts' => [
-                        'scheme' => 'https'
-                    ],
-                ]),
-
-                // email EMAILADDRESS
-                EmailField::create(
-                    $this->prefixedFieldName('Email'),
-                    'Email address'
-                ),
-
-                // internal page
-                TreeDropdownField::create(
-                    $this->prefixedFieldName('SiteTree'),
-                    'Internal page',
-                    SiteTree::class
-                )->setForm( $this->getForm() ),
-
-                // current file record
-                TreeDropdownField::create(
-                    $this->prefixedFieldName('File'),
-                    _t(__CLASS__ . '.FILE', 'File'),
-                    File::class,
-                    "ID",
-                    "Title"
-                )->setForm( $this->getForm() ),
-
-                // phone
-                TextField::create(
-                    $this->prefixedFieldName('Phone'),
-                    'Telephone'
-                )->setInputType('tel')
-
-            ]
-        );
-        return $fields;
-    }
-
-    /**
-     * @param array $properties
-     * @return CompositeField|GridField
-     */
-    public function Field($properties = [])
-    {
-        switch ($this->isOneOrMany()) {
-            case 'one':
-                return $this->getHasOneField();
-                break;
-            default:
-                return parent::Field($properties);
-                break;
-        }
-    }
-
-    /**
-     *
-     * First validate then attempt to create  Link record from the value provided
-     */
-    protected function createLinkFromValue($validator) {
-        $index = $this->config()->get('field_index_name');
-        if( !is_array($this->value) || empty($this->value[ $index ]) || !is_array( $this->value[ $index ]) ) {
-            $validator->validationError(
-                $this->name,
-                _t(
-                    __CLASS__ . ".GENERAL_VALIDATION_ERROR",
-                    "The {title} field requires at least one type of link",
-                    [
-                        'title' => $this->Title()
-                    ]
-
-                ),
-                'validation'
-            );
-            return false;
-        }
-
-        // value the composite field
-        $field = $this->getHasOneField();
-        if(!($valid = $field->validate($validator))) {
-            return false;
-        }
-
-        $fields = $field->FieldList();
-
-        $values = $this->value[ $index ];
-        $fields_with_values = [];
-        foreach($values as $key => $value) {
-            $field = $fields->dataFieldByName( $this->prefixedFieldName( $key ));
-            $field->setValue( $value );
-            if($value) {
-                // this will get any textfield values and dropdown fields with an empty value
-                $fields_with_values[ $key ] = $field;
-            }
-        }
-
-        if(empty($fields_with_values)) {
-            // no values submitted
-            $validator->validationError(
-                $this->getName(),
-                _t(
-                    __CLASS__ . ".NO_DATA_PROVIDED",
-                    "Please provide at least one link"
-                ),
-                'validation'
-            );
-            return false;
-        } else if(count($fields_with_values) > 1) {
-            // more than one value provided
-            $validator->validationError(
-                $this->getName(),
-                _t(
-                    __CLASS__ . ".ONLY_ONE_TYPE_OF_LINK_PLEASE",
-                    "Please ensure only one type of link is provided",
-
-                ),
-                'validation'
-            );
-            return false;
-        } else {
-
-            // just one value provided
-
-            /**
-             * @var string one of Link, URL, SiteTree, Email, Phone, File
-             */
-            $type  = key($fields_with_values);
-
-            /**
-             * @var string value to save
-             */
-            $field = current($fields_with_values);
-
-            try {
-                $link = Link::create();
-                if($id = $link->saveInline($type, $field, $this->parent, $this->Title())) {
-                    // save the link record ID to the parent (which will save itself)
-                    $this->parent->setField($this->getName() . "ID", $id);
-                    return true;
-                }
-                throw new \Exception("Could not save value at this time");
-            } catch (\Exception $e) {
-                $validator->validationError(
-                    $this->getName(),
-                    _t(
-                        __CLASS__ . ".SAVE_INLINE_FIELD_ERROR",
-                        "Error: {error}",
-                        [
-                            'error' => $e->getMessage()
-                        ]
+            $fields->addFieldsToTab(
+                'Current',
+                [
+                    HeaderField::create(
+                        $this->prefixedFieldName('CurrentLinkDetails'),
+                        _t(__CLASS__ . ".CURRENT_LINK_DETAILS", "Current link"),
+                        3
                     ),
-                    'validation'
-                );
-                return false;
-            }
-        }
-    }
+                    // literal field template for the current link
+                    LiteralField::create(
+                        $this->prefixedFieldName('ExistingLinkRecord'),
+                        '<p class="message notice">'
+                            . "<strong>" . _t(__CLASS__ . ".CURRENT_VALUE", "Title") . "</strong>: " . $this->record->Title
+                            . "<br>"
+                            . "<strong>" . _t(__CLASS__ . ".CURRENT_VALUE", "Link") . "</strong>: " . $this->record->getLinkURL()
+                            . "<br>"
+                            . "<strong>" . _t(__CLASS__ . ".CURRENT_TYPE", "Type") . "</strong>: " . $this->record->Type
+                         . '</p>'
+                    )
+                ]
+            );
 
-    /**
-     * Validate this field, in the CMS context this is called from CompositeField::validate
-     *
-     * @param Validator $validator
-     * @return bool
-     */
-    public function validate($validator)
-    {
-        switch ($this->isOneOrMany()) {
-            case 'one':
-                return $this->createLinkFromValue($validator);
-                break;
-            default:
-                return parent::validate($validator);
-                break;
         }
+
+        // a field that the editor can toggle to open
+        $fields->push(
+            Tab::create(
+                'Link',
+                'Link',
+            )
+        );
+
+        $fields->addFieldToTab(
+            'Link',
+            DropdownField::create(
+                $this->prefixedFieldName('Link'),
+                _t( __CLASS__ . '.EXISTING_LINK', 'Choose an existing link record'),
+                $links->map('ID','TypeWithURL')->toArray()
+            )->setEmptyString(''),
+        );
+
+        $fields->push(
+            Tab::create(
+                'External',
+                'External'
+            )
+        );
+        $fields->addFieldToTab(
+            'External',
+            ExternalURLField::create(
+                $this->prefixedFieldName('URL'),
+                _t( __CLASS__ . '.EXTERNAL_URL', 'Enter an external URL')
+            )->setConfig([
+                'html5validation' => true,
+                'defaultparts' => [
+                    'scheme' => 'https'
+                ],
+            ])->setInputType('url')
+        );
+
+        $fields->push(
+            Tab::create(
+                'Email',
+                'Email'
+            )
+        );
+
+        $email_field_name = $this->prefixedFieldName('Email');
+        $fields->addFieldToTab(
+            'Email',
+            EmailField::create(
+                $email_field_name,
+                _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
+            )
+        );
+
+        $fields->push(
+            Tab::create(
+                'Page',
+                'Page'
+            )
+        );
+
+        $fields->addFieldToTab(
+            'Page',
+            TreeDropdownField::create(
+                $this->prefixedFieldName('SiteTree'),
+                _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
+                SiteTree::class
+            )->setForm( $this->getForm() )
+        );
+
+        $fields->push(
+            Tab::create(
+                'File',
+                'File'
+            )
+        );
+        $fields->addFieldToTab(
+            'File',
+            TreeDropdownField::create(
+                $this->prefixedFieldName('File'),
+                _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
+                File::class,
+                "ID",
+                "Title"
+            )->setForm( $this->getForm() )
+        );
+
+        $fields->push(
+            Tab::create(
+                'Phone',
+                'Phone'
+            )
+        );
+
+        $fields->addFieldToTab(
+            'Phone',
+            TextField::create(
+                $this->prefixedFieldName('Phone'),
+                _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
+            )->setInputType('tel')
+        );
+
+        return $fields;
     }
 
 }

@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "gorriecoe/silverstripe-linkfield": "^1.0.0",
+        "gorriecoe/silverstripe-link": "^1.0.0",
         "burnbright/silverstripe-externalurlfield" : "^0.3"
     },
     "require-dev": {

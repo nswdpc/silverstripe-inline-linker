@@ -1,11 +1,6 @@
 ---
 Name: nswdpc-inline-linker
-Only:
-  moduleexists: 'gorriecoe/silverstripe-linkfield'
 ---
-SilverStripe\Core\Injector\Injector:
-  gorriecoe\LinkField\LinkField:
-    class: NSWDPC\InlineLinker\InlineLinkField
 gorriecoe\Link\Models\Link:
   extensions:
     - 'NSWDPC\InlineLinker\LinkExtension'
