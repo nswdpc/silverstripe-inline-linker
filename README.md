@@ -14,17 +14,44 @@ Rather than take the content editor to a new data entry screen, the link can be 
 The object of this module is to:
 
 - have no Javascript dependencies, beyond those provided by core framework fields.
-- act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only), using Injector.
+- act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only)
 
+## Usage
+
+Use the InlineLinkCompositeField to load the fields:
+
+```php
+<?php
+namespace Some\Thing;
+
+use gorriecoe\Link\Models\Link;
+use NSWDPC\InlineLinker\InlineLinkCompositeField;
+use SilverStripe\ORM\DataObject;
+
+//....
+
+class MyThing extends DataObject {
+
+    private static $has_one = [
+        'MyLink' => Link::class
+    ];
+
+    //....
+
+    public function getLinkField() {
+        return InlineLinkCompositeField::create(
+                'MyLink',
+                _t(__CLASS__ . '.LINK', 'My link title'),
+                $this
+        );
+    }
+
+}
+```
 
 ## Requirements
 
 See [composer.json](./composer.json)
-
-```
-"gorriecoe/silverstripe-linkfield": "^1.0.0",
-"burnbright/silverstripe-externalurlfield" : "^0.3"
-```
 
 ## Installation
 
@@ -33,6 +60,8 @@ The recommended way of installing this module is via [composer](https://getcompo
 ```
 composer require nswdpc/silverstripe-inline-linker
 ```
+
+> Remember to add a repository entry in composer.json to load this module, currently.
 
 ## License
 
