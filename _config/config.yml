@@ -4,3 +4,7 @@ Name: nswdpc-inline-linker
 gorriecoe\Link\Models\Link:
   extensions:
     - 'NSWDPC\InlineLinker\LinkExtension'
+
+SilverStripe\Admin\LeftAndMain:
+  extra_requirements_css:
+    - vendor/nswdpc/silverstripe-inline-linker/client/static/styles/admin.css

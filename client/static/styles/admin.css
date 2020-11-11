@@ -1,0 +1,18 @@
+.cms-edit-form .elementalarea .inlinelinkcomposite {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 0 100%;
+  max-width : 860px;
+  flex: 1 0 100%;
+  border:1px solid #ced5e1;
+  background-color:#f3f3f3;
+  padding:1rem;
+  border-radius : 4px;
+
+}
+
+.cms-edit-form .inlinelinkcomposite .form__field-holder .inlinelink-wrapper {
+  border:1px solid #ced5e1;
+  background-color:#f3f3f3;
+  padding:1rem;
+  border-radius : 4px;
+}
