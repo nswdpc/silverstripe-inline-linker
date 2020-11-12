@@ -19,7 +19,7 @@ The object of this module is to:
 
 ## Usage
 
-Use the InlineLinkCompositeField to load th
+Use the InlineLinkCompositeField to load the fields:
 
 ```php
 <?php
