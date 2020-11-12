@@ -13,7 +13,6 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\HeaderField;
-use SilverStripe\Forms\EmailField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormField;
 use SilverStripe\Forms\LiteralField;
@@ -60,6 +59,13 @@ class InlineLinkField extends TabSet {
 
     const FIELD_NAME_TITLE = "Title";
     const FIELD_NAME_OPEN_IN_NEW_WINDOW = "OpenInNewWindow";
+
+    const LINKTYPE_EMAIL = 'Email';
+    const LINKTYPE_URL = 'URL';
+    const LINKTYPE_LINK = 'Link';
+    const LINKTYPE_SITETREE = 'SiteTree';
+    const LINKTYPE_PHONE = 'Phone';
+    const LINKTYPE_FILE = 'File';
 
     public function __construct(string $name, string $title, DataObject $parent)
     {
@@ -254,20 +260,20 @@ class InlineLinkField extends TabSet {
         $value = $field->dataValue();
         $data = [];
         switch($type) {
-            case 'Link':
+            case self::LINKTYPE_LINK:
                 // pre-existing Link record
                 $data = [
                     'LinkID' => $value,
-                    'Type' => $this->getLinkTypeLink()
+                    'Type' => $type
                 ];
                 break;
-            case 'SiteTree':
+            case self::LINKTYPE_SITETREE:
                 $data = [
                     'SiteTreeID' => $value,
-                    'Type' => 'SiteTree',
+                    'Type' => $type
                 ];
                 break;
-            case 'File':
+            case self::LINKTYPE_FILE:
                 // for files, getItemIDs
                 $id_list = $field->getItemIDs();
                 $file_id = 0;//TODO error?
@@ -276,31 +282,25 @@ class InlineLinkField extends TabSet {
                 }
                 $data = [
                     'FileID' => $file_id,
-                    'Type' => 'File'
+                    'Type' => $type
                 ];
                 break;
-            case 'URL':
+            case self::LINKTYPE_URL:
                 $data = [
                     'URL' => $value,
-                    'Type' => 'URL'
+                    'Type' => $type
                 ];
                 break;
-            case 'Email':
+            case self::LINKTYPE_EMAIL:
                 $data = [
                     'Email' => $value,
-                    'Type' => 'Email'
+                    'Type' => $type
                 ];
                 break;
-            case 'Phone':
+            case self::LINKTYPE_PHONE:
                 $data = [
                     'Phone' => $value,
-                    'Type' => 'Phone'
-                ];
-                break;
-            case 'URL':
-                $data = [
-                    'URL' => $value,
-                    'Type' => 'URL'
+                    'Type' => $type
                 ];
                 break;
             default:
@@ -463,7 +463,7 @@ class InlineLinkField extends TabSet {
 
             Tab::create(
                 _t(__CLASS__ . ".EXTERNAL", "External"),
-                ExternalURLField::create(
+                InlineLink_URLField::create(
                     $this->prefixedFieldName('URL'),
                     _t( __CLASS__ . '.EXTERNAL_URL', 'Provide an external URL')
                 )->setConfig([
@@ -473,12 +473,12 @@ class InlineLinkField extends TabSet {
                     ],
                 ])->setDescription(
                     _t( __CLASS__ . '.EXTERNAL_URL_NOTE', 'The URL should start with an https:// or http://')
-                )->setInputType('url')
+                )
             ),
 
             Tab::create(
                 _t(__CLASS__ . ".LINK", "Link"),
-                DropdownField::create(
+                InlineLink_LinkField::create(
                     $this->prefixedFieldName('Link'),
                     _t( __CLASS__ . '.EXISTING_LINK', 'Choose an existing link record'),
                     $links->map('ID','TitleWithURL')
@@ -487,7 +487,7 @@ class InlineLinkField extends TabSet {
 
             Tab::create(
                 _t(__CLASS__ . ".Email", "Email"),
-                EmailField::create(
+                InlineLink_EmailField::create(
                     $this->prefixedFieldName('Email'),
                     _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
                 )->setDescription(
@@ -497,33 +497,30 @@ class InlineLinkField extends TabSet {
 
             Tab::create(
                 _t(__CLASS__ . ".Page", "Page"),
-                TreeDropdownField::create(
+                InlineLink_SiteTreeField::create(
                     $this->prefixedFieldName('SiteTree'),
                     _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
                     SiteTree::class
-                )->setForm( $this->getForm() )
+                )
             ),
 
             Tab::create(
                 _t(__CLASS__ . ".File", "File"),
-                UploadField::create(
+                InlineLink_FileField::create(
                     $this->prefixedFieldName('File'),
                     _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
-                )->setUploadEnabled(true)
-                ->setAttachEnabled(true)
-                ->setAllowedMaxFileNumber(1)
-                ->setIsMultiUpload(false)
+                )
             ),
 
 
             Tab::create(
                 _t(__CLASS__ . ".Phone", "Phone"),
-                TextField::create(
+                InlineLink_PhoneField::create(
                     $this->prefixedFieldName('Phone'),
                     _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
                 )->setDescription(
                     _t( __CLASS__ . '.PHONE_NOTE', 'Supply the country dialling code to remove ambiguity')
-                )->setInputType('tel')
+                )->addExtraClass('text')
             )
 
         ];

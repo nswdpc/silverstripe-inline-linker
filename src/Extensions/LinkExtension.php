@@ -44,11 +44,11 @@ class LinkExtension extends DataExtension {
      * Link is a valid allowed type
      */
     public function updateTypes(&$types) {
-        $types[] = $this->getLinkTypeLink();
+        $types[] = InlineLinkField::LINKTYPE_LINK;
     }
 
     public function updateLinkURL(&$link_url) {
-        if($this->owner->Type == $this->getLinkTypeLink()) {
+        if($this->owner->Type == InlineLinkField::LINKTYPE_LINK) {
             $link = $this->owner->Link();
             if($link && $link->exists()) {
                 $link_url = $link->getLinkURL();
@@ -62,7 +62,7 @@ class LinkExtension extends DataExtension {
     }
 
     public function getLinkTypeLink() {
-        return "Link";
+        return InlineLinkField::LINKTYPE_LINK;
     }
 
 }
