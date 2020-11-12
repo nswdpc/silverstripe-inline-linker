@@ -22,49 +22,46 @@ class InlineLinkCompositeField extends CompositeField
 
         $current = $inline_link_field->CurrentLink();
 
-        $children->push(
-            HeaderField::create(
-                $name . "_NewLinkHeader",
-                _t("NSWDPC\\InlineLinker\\InlineLinkField.NEW_LINK_HEADER", "Set the link")
-            )
-        );
+        // if there is a current link, render a header field and the template for the current link
+        if($current) {
+            $children->push(
+                CompositeField::create(
+                    HeaderField::create(
+                        $name . "_CurrentLinkHeader",
+                        _t("NSWDPC\\InlineLinker\\InlineLinkField.CURRENT_LINK_HEADER", "Current link")
+                    ),
+                    $current
+                )
+            );
+        }
 
         $link_title_field = TextField::create(
-            $inline_link_field->prefixedFieldName('Title'),
-            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE", 'Title')
-        )->setSubmittedValue( $inline_link_field->getRecordTitle() );
-
-        $children->push(
-            $link_title_field
+            $inline_link_field->prefixedFieldName( InlineLinkField::FIELD_NAME_TITLE ),
+            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE", 'Title'),
+            $inline_link_field->getRecordTitle()
         );
 
         $link_openinnewwindow_field = CheckboxField::create(
-            $inline_link_field->prefixedFieldName('OpenInNewWindow'),
-            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW", 'Open in new window')
-        )->setValue( $inline_link_field->getRecordOpenInNewWindow() );
-        $children->push(
-            $link_openinnewwindow_field
+            $inline_link_field->prefixedFieldName( InlineLinkField::FIELD_NAME_OPEN_IN_NEW_WINDOW),
+            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW", 'Open in new window'),
+            $inline_link_field->getRecordOpenInNewWindow()
         );
 
         // to save these fields, the InlineLinkField needs to know about them
         $inline_link_field->setTitleField( $link_title_field );
         $inline_link_field->setOpenInNewWindowField( $link_openinnewwindow_field );
 
-        // Ensure the InlineLinkField (TabSet) gets added as a child
         $children->push(
-            $inline_link_field
-        );
-
-        // if there is a current link, render a header field and the template for the current link
-        if($current) {
-            $children->push(
+            CompositeField::create(
                 HeaderField::create(
-                    $name . "_CurrentLinkHeader",
-                    _t("NSWDPC\\InlineLinker\\InlineLinkField.CURRENT_LINK_HEADER", "Current link")
-                )
-            );
-            $children->push($current);
-        }
+                    $name . "_NewLinkHeader",
+                    _t("NSWDPC\\InlineLinker\\InlineLinkField.NEW_LINK_HEADER", "Update the link")
+                ),
+                $link_title_field,
+                $link_openinnewwindow_field,
+                $inline_link_field
+            )
+        );
 
         // push all child fields
         parent::__construct($children);
