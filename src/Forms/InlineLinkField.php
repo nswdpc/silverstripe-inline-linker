@@ -12,9 +12,7 @@ use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\CheckboxField;
-use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\HeaderField;
-use SilverStripe\Forms\SelectionGroup;
 use SilverStripe\Forms\EmailField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormField;
@@ -23,7 +21,6 @@ use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\Tabset;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TreeDropdownField;
-use SilverStripe\Forms\SelectionGroup_Item;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\ValidationException;
@@ -34,7 +31,7 @@ use SilverStripe\View\Requirements;
  * The Inline link field extends TabSet, provides child fields that
  * save to the gorriecode/link model
  */
-class InlineLinkField extends SelectionGroup {
+class InlineLinkField extends TabSet {
 
     /**
      * @var gorriecoe\Link\Models\Link|null
@@ -82,9 +79,8 @@ class InlineLinkField extends SelectionGroup {
         $this->setRecord($component);
 
         // get all available fields
-        $items = $this->getAvailableFields();
-        $value = null;
-        parent::__construct($name, $items, $value);
+        $tabs = $this->getAvailableFields();
+        parent::__construct($name, $title, $tabs);
     }
 
     /**
@@ -109,6 +105,7 @@ class InlineLinkField extends SelectionGroup {
      */
     public function setSubmittedValue($values, $data = null)
     {
+
         /**
          * Due to https://github.com/dnadesign/silverstripe-elemental/issues/381
          * and https://github.com/silverstripe/silverstripe-admin/issues/639
@@ -307,7 +304,7 @@ class InlineLinkField extends SelectionGroup {
                 ];
                 break;
             default:
-                throw new \Exception("Unknown type {$type}");
+                throw new ValidationException("The link of the type '{$type}' cannot be saved'");
                 break;
         }
 
@@ -462,10 +459,10 @@ class InlineLinkField extends SelectionGroup {
             $links = $links->exclude("ID", $this->record->ID);
         }
 
-        $fields = FieldList::create([
+        $fields = [
 
-            SelectionGroup_Item::create(
-                'External',
+            Tab::create(
+                _t(__CLASS__ . ".EXTERNAL", "External"),
                 ExternalURLField::create(
                     $this->prefixedFieldName('URL'),
                     _t( __CLASS__ . '.EXTERNAL_URL', 'Provide an external URL')
@@ -476,66 +473,60 @@ class InlineLinkField extends SelectionGroup {
                     ],
                 ])->setDescription(
                     _t( __CLASS__ . '.EXTERNAL_URL_NOTE', 'The URL should start with an https:// or http://')
-                )->setInputType('url'),
-                _t(__CLASS__ . ".EXTERNAL", "External")
+                )->setInputType('url')
             ),
 
-            SelectionGroup_Item::create(
-                'LinkSelection',
+            Tab::create(
+                _t(__CLASS__ . ".LINK", "Link"),
                 DropdownField::create(
                     $this->prefixedFieldName('Link'),
                     _t( __CLASS__ . '.EXISTING_LINK', 'Choose an existing link record'),
                     $links->map('ID','TitleWithURL')
-                )->setEmptyString(''),
-                _t(__CLASS__ . ".LINK", "Link")
+                )->setEmptyString('')
             ),
 
-            SelectionGroup_Item::create(
-                'Email',
+            Tab::create(
+                _t(__CLASS__ . ".Email", "Email"),
                 EmailField::create(
                     $this->prefixedFieldName('Email'),
                     _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
                 )->setDescription(
                     _t( __CLASS__ . '.EMAIL_NOTE', 'e.g. \'someone@example.com\'')
-                ),
-                _t(__CLASS__ . ".Email", "Email")
+                )
             ),
 
-            SelectionGroup_Item::create(
-                'Page',
+            Tab::create(
+                _t(__CLASS__ . ".Page", "Page"),
                 TreeDropdownField::create(
                     $this->prefixedFieldName('SiteTree'),
                     _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
                     SiteTree::class
-                )->setForm( $this->getForm() ),
-                _t(__CLASS__ . ".Page", "Page")
+                )->setForm( $this->getForm() )
             ),
 
-            SelectionGroup_Item::create(
-                'File',
+            Tab::create(
+                _t(__CLASS__ . ".File", "File"),
                 UploadField::create(
                     $this->prefixedFieldName('File'),
                     _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
                 )->setUploadEnabled(true)
                 ->setAttachEnabled(true)
                 ->setAllowedMaxFileNumber(1)
-                ->setIsMultiUpload(false),
-                _t(__CLASS__ . ".File", "File")
+                ->setIsMultiUpload(false)
             ),
 
 
-            SelectionGroup_Item::create(
-                'Phone',
+            Tab::create(
+                _t(__CLASS__ . ".Phone", "Phone"),
                 TextField::create(
                     $this->prefixedFieldName('Phone'),
                     _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
                 )->setDescription(
                     _t( __CLASS__ . '.PHONE_NOTE', 'Supply the country dialling code to remove ambiguity')
-                )->setInputType('tel'),
-                _t(__CLASS__ . ".Phone", "Phone")
+                )->setInputType('tel')
             )
 
-        ]);
+        ];
 
         return $fields;
     }
