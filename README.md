@@ -4,7 +4,7 @@ This module provides a basic **inline** linking field, saving into the Link mode
 
 Rather than take the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
 
-- Choose a current link record
+- 🧪 Choose a current link record
 - Enter an external URL
 - Email address
 - Internal page
@@ -13,12 +13,13 @@ Rather than take the content editor to a new data entry screen, the link can be 
 
 The object of this module is to:
 
-- have no Javascript dependencies, beyond those provided by core framework fields.
+- allow editing and creation of links within the context of the parent record
+- have no Javascript dependencies, beyond those provided by core framework fields
 - act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only)
 
 ## Usage
 
-Use the InlineLinkCompositeField to load the fields:
+Use the InlineLinkCompositeField to load th
 
 ```php
 <?php
@@ -36,7 +37,18 @@ class MyThing extends DataObject {
         'MyLink' => Link::class
     ];
 
-    //....
+    public function getCmsFields()
+    {
+        $fields = parent::getCmsFields();
+        $fields->addFieldsToTab(
+            'Root.Main', [
+                //-- some fields
+                $this->getLinkField()
+                //-- some other fields
+            ]
+        );
+        return $fields;
+    }
 
     public function getLinkField() {
         return InlineLinkCompositeField::create(
