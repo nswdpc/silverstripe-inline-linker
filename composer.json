@@ -17,7 +17,7 @@
     ],
     "require": {
         "gorriecoe/silverstripe-link": "^1.0.0",
-        "burnbright/silverstripe-externalurlfield" : "^0.3"
+        "fromholdio/silverstripe-externalurlfield" : "^1"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7",
