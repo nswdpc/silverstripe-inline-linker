@@ -2,9 +2,11 @@
 
 This module provides a basic **inline** linking field, saving into the Link model provided by gorriecoe/silverstripe-link
 
+This module is under development and should not be used on production websites.
+
 Rather than take the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
 
-- 🧪 Choose a current link record
+- 🧪 Choose a current link record (experimental)
 - Enter an external URL
 - Email address
 - Internal page
