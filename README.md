@@ -6,12 +6,12 @@ This module is under development and should not be used on production websites.
 
 Rather than take the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
 
-- 🧪 Choose a current link record (experimental)
 - Enter an external URL
 - Email address
 - Internal page
 - Existing file asset
 - Phone
+- 🧪 Choose a current link record (experimental - this feature is likely to be turned off or removed)
 
 The object of this module is to:
 
