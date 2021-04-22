@@ -489,7 +489,7 @@ class InlineLinkField extends TabSet {
             _t(__CLASS__ . ".Page", "Page"),
             InlineLink_SiteTreeField::create(
                 $this->prefixedFieldName('SiteTree'),
-                _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
+                _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website or type to start searching'),
                 SiteTree::class
             )
         );
