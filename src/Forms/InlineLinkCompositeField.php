@@ -21,6 +21,9 @@ class InlineLinkCompositeField extends CompositeField
 
         $inline_link_field = InlineLinkField::create($name, $title, $parent);
 
+        // determine if in the context of an inline editable Elemental element
+        $inline_editable = $inline_link_field->hasInlineElementalParent();
+
         $current = $inline_link_field->CurrentLink();
 
         /**
@@ -74,7 +77,16 @@ class InlineLinkCompositeField extends CompositeField
 
         // set name and title AFTER the parent composite is created
         $this->setName($name . "_InlinkLinkComposite");
-        $this->setTitle($title);
+
+        // handle inline editable element by using a fieldset/legend
+        if($inline_editable) {
+            $this->setLegend($title);
+            $this->setTag('fieldset');
+        } else {
+            $this->setTitle($title);
+            $this->setTag('div');
+        }
+
 
     }
 
