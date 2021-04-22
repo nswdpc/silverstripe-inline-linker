@@ -10,6 +10,7 @@ use SilverStripe\AssetAdmin\Forms\UploadField;
 use SilverStripe\Assets\File;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\HeaderField;
@@ -62,7 +63,6 @@ class InlineLinkField extends TabSet {
 
     const LINKTYPE_EMAIL = 'Email';
     const LINKTYPE_URL = 'URL';
-    const LINKTYPE_LINK = 'Link';
     const LINKTYPE_SITETREE = 'SiteTree';
     const LINKTYPE_PHONE = 'Phone';
     const LINKTYPE_FILE = 'File';
@@ -260,13 +260,6 @@ class InlineLinkField extends TabSet {
         $value = $field->dataValue();
         $data = [];
         switch($type) {
-            case self::LINKTYPE_LINK:
-                // pre-existing Link record
-                $data = [
-                    'LinkID' => $value,
-                    'Type' => $type
-                ];
-                break;
             case self::LINKTYPE_SITETREE:
                 $data = [
                     'SiteTreeID' => $value,
@@ -459,71 +452,58 @@ class InlineLinkField extends TabSet {
             $links = $links->exclude("ID", $this->record->ID);
         }
 
-        $fields = [
-
-            Tab::create(
-                _t(__CLASS__ . ".EXTERNAL", "External"),
-                InlineLink_URLField::create(
-                    $this->prefixedFieldName('URL'),
-                    _t( __CLASS__ . '.EXTERNAL_URL', 'Provide an external URL')
-                )->setConfig([
-                    'html5validation' => true,
-                    'defaultparts' => [
-                        'scheme' => 'https'
-                    ],
-                ])->setDescription(
-                    _t( __CLASS__ . '.EXTERNAL_URL_NOTE', 'The URL should start with an https:// or http://')
-                )
-            ),
-
-            Tab::create(
-                _t(__CLASS__ . ".LINK", "Link"),
-                InlineLink_LinkField::create(
-                    $this->prefixedFieldName('Link'),
-                    _t( __CLASS__ . '.EXISTING_LINK', 'Choose an existing link record'),
-                    $links->map('ID','TitleWithURL')
-                )->setEmptyString('')
-            ),
-
-            Tab::create(
-                _t(__CLASS__ . ".Email", "Email"),
-                InlineLink_EmailField::create(
-                    $this->prefixedFieldName('Email'),
-                    _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
-                )->setDescription(
-                    _t( __CLASS__ . '.EMAIL_NOTE', 'e.g. \'someone@example.com\'')
-                )
-            ),
-
-            Tab::create(
-                _t(__CLASS__ . ".Page", "Page"),
-                InlineLink_SiteTreeField::create(
-                    $this->prefixedFieldName('SiteTree'),
-                    _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
-                    SiteTree::class
-                )
-            ),
-
-            Tab::create(
-                _t(__CLASS__ . ".File", "File"),
-                InlineLink_FileField::create(
-                    $this->prefixedFieldName('File'),
-                    _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
-                )
-            ),
-
-
-            Tab::create(
-                _t(__CLASS__ . ".Phone", "Phone"),
-                InlineLink_PhoneField::create(
-                    $this->prefixedFieldName('Phone'),
-                    _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
-                )->setDescription(
-                    _t( __CLASS__ . '.PHONE_NOTE', 'Supply the country dialling code to remove ambiguity')
-                )->addExtraClass('text')
+        $fields[] = Tab::create(
+            _t(__CLASS__ . ".EXTERNAL", "External"),
+            InlineLink_URLField::create(
+                $this->prefixedFieldName('URL'),
+                _t( __CLASS__ . '.EXTERNAL_URL', 'Provide an external URL')
+            )->setConfig([
+                'html5validation' => true,
+                'defaultparts' => [
+                    'scheme' => 'https'
+                ],
+            ])->setDescription(
+                _t( __CLASS__ . '.EXTERNAL_URL_NOTE', 'The URL should start with an https:// or http://')
             )
+        );
 
-        ];
+        $fields[] = Tab::create(
+            _t(__CLASS__ . ".Email", "Email"),
+            InlineLink_EmailField::create(
+                $this->prefixedFieldName('Email'),
+                _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
+            )->setDescription(
+                _t( __CLASS__ . '.EMAIL_NOTE', 'e.g. \'someone@example.com\'')
+            )
+        );
+
+        $fields[] = Tab::create(
+            _t(__CLASS__ . ".Page", "Page"),
+            InlineLink_SiteTreeField::create(
+                $this->prefixedFieldName('SiteTree'),
+                _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
+                SiteTree::class
+            )
+        );
+
+        $fields[] = Tab::create(
+            _t(__CLASS__ . ".File", "File"),
+            InlineLink_FileField::create(
+                $this->prefixedFieldName('File'),
+                _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
+            )
+        );
+
+
+        $fields[] = Tab::create(
+            _t(__CLASS__ . ".Phone", "Phone"),
+            InlineLink_PhoneField::create(
+                $this->prefixedFieldName('Phone'),
+                _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
+            )->setDescription(
+                _t( __CLASS__ . '.PHONE_NOTE', 'Supply the country dialling code to remove ambiguity')
+            )->addExtraClass('text')
+        );
 
         return $fields;
     }

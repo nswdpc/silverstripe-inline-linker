@@ -14,6 +14,7 @@ use SilverStripe\Forms\HeaderField;
  */
 class InlineLinkCompositeField extends CompositeField
 {
+
     public function __construct($name, $title, $parent) {
 
         $children = FieldList::create();
@@ -25,13 +26,14 @@ class InlineLinkCompositeField extends CompositeField
         // if there is a current link, render a header field and the template for the current link
         if($current) {
             $children->push(
-                CompositeField::create(
-                    HeaderField::create(
-                        $name . "_CurrentLinkHeader",
-                        _t("NSWDPC\\InlineLinker\\InlineLinkField.CURRENT_LINK_HEADER", "Current link")
-                    ),
-                    $current
+                HeaderField::create(
+                    $name . "_CurrentLinkHeader",
+                    _t("NSWDPC\\InlineLinker\\InlineLinkField.CURRENT_LINK_HEADER", "Current link")
                 )
+            );
+            $children->push(
+                // @var LiteralField
+                $current
             );
         }
 
@@ -52,15 +54,15 @@ class InlineLinkCompositeField extends CompositeField
         $inline_link_field->setOpenInNewWindowField( $link_openinnewwindow_field );
 
         $children->push(
-            CompositeField::create(
-                HeaderField::create(
-                    $name . "_NewLinkHeader",
-                    _t("NSWDPC\\InlineLinker\\InlineLinkField.NEW_LINK_HEADER", "Update the link")
-                ),
-                $link_title_field,
-                $link_openinnewwindow_field,
-                $inline_link_field
-            )
+            $link_title_field
+        );
+
+        $children->push(
+            $link_openinnewwindow_field
+        );
+
+        $children->push(
+            $inline_link_field
         );
 
         // push all child fields
