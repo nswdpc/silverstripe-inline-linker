@@ -3,19 +3,31 @@
   -webkit-flex: 1 0 100%;
   max-width : 860px;
   flex: 1 0 100%;
-  border:1px solid #ced5e1;
-  background-color:#f3f3f3;
-  padding:1rem;
-  border-radius : 4px;
+  border: none;
+  border-radius: 2px;/* with browser support outline will follow this */
+  outline: 1px solid #dbe0ea;
+  padding: 1rem;
+}
+
+.cms-edit-form .elementalarea .inlinelinkcomposite legend {
+    background: transparent;
+    font-size: 1em;
+    margin: 0;
+    padding: 1em 0 0 0;
 }
 
 .cms-edit-form .elementalarea .inlinelinkcomposite .uploadfield-item {
   margin-bottom : 1rem;
 }
 
-.cms-edit-form .inlinelinkcomposite .form__field-holder .inlinelink-wrapper {
-  border:1px solid #ced5e1;
-  background-color:#f3f3f3;
+.cms-edit-form .inlinelink {
+  background: #fff;
+  border: 1px solid #dbe0ea;
   padding:1rem;
-  border-radius : 4px;
+}
+
+.cms-edit-form .elementalarea .inlinelinkcomposite .inlinelink {
+  background: transparent;
+  border: none;
+  padding : 0;
 }
