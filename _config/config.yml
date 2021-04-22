@@ -4,7 +4,6 @@ Name: nswdpc-inline-linker
 gorriecoe\Link\Models\Link:
   extensions:
     - 'NSWDPC\InlineLinker\LinkExtension'
-  enable_linkrecord_linking: false
 
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
