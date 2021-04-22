@@ -23,8 +23,12 @@ class InlineLinkCompositeField extends CompositeField
 
         $current = $inline_link_field->CurrentLink();
 
-        // if there is a current link, render a header field and the template for the current link
-        if($current) {
+        /**
+         * If there is a current link,
+         * render a header field and the template for the current link
+         * A link might exist without a
+         */
+        if($current && $current->Type) {
             $children->push(
                 HeaderField::create(
                     $name . "_CurrentLinkHeader",
