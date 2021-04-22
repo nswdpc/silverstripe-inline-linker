@@ -421,8 +421,16 @@ class InlineLinkField extends TabSet {
 
     /**
      * @return LiteralField
+     * @deprecated
      */
     public function CurrentLink() {
+        return $this->getCurrentLinkField();
+    }
+
+    /**
+     * @return LiteralField
+     */
+    public function getCurrentLinkField() {
         $field = $this->CurrentLinkTemplate();
         return $field;
     }

@@ -16,8 +16,9 @@
     padding: 1em 0 0 0;
 }
 
-.cms-edit-form .elementalarea .inlinelinkcomposite .uploadfield-item {
+.cms-edit-form .inlinelinkcomposite .uploadfield-item {
   margin-bottom : 1rem;
+  border: 1px solid #ced5e1;
 }
 
 .cms-edit-form .inlinelink {

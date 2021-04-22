@@ -6,7 +6,7 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\Forms\HeaderField;
+use SilverStripe\Forms\LabelField;
 
 /**
  * Subclass for specific composite field handling, currently not in use
@@ -28,23 +28,26 @@ class InlineLinkCompositeField extends CompositeField
         // determine if in the context of an inline editable Elemental element
         $inline_editable = $inline_link_field->hasInlineElementalParent();
 
-        $current = $inline_link_field->CurrentLink();
+        $current_link = $inline_link_field->getRecord();
+        $current_link_field = $inline_link_field->getCurrentLinkField();
 
         /**
          * If there is a current link,
          * render a header field and the template for the current link
          * A link might exist without a
          */
-        if($current && $current->Type) {
+        $has_current_link = false;
+        if($current_link_field && $current_link && $current_link->exists() && $current_link->Type) {
+            $has_current_link = true;
             $children->push(
-                HeaderField::create(
+                LabelField::create(
                     $name . "_CurrentLinkHeader",
                     _t("NSWDPC\\InlineLinker\\InlineLinkField.CURRENT_LINK_HEADER", "Current link")
                 )
             );
             $children->push(
                 // @var LiteralField
-                $current
+                $current_link_field
             );
         }
 
@@ -63,6 +66,15 @@ class InlineLinkCompositeField extends CompositeField
         // to save these fields, the InlineLinkField needs to know about them
         $inline_link_field->setTitleField( $link_title_field );
         $inline_link_field->setOpenInNewWindowField( $link_openinnewwindow_field );
+
+        if($has_current_link) {
+            $children->push(
+                LabelField::create(
+                    $name . "_ChangeLinkHeader",
+                    _t("NSWDPC\\InlineLinker\\InlineLinkField.CHANGE_LINK_HEADER", "Update this link")
+                )
+            );
+        }
 
         $children->push(
             $link_title_field
