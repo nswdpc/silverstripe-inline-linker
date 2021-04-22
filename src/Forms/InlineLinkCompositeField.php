@@ -19,7 +19,11 @@ class InlineLinkCompositeField extends CompositeField
 
         $children = FieldList::create();
 
-        $inline_link_field = InlineLinkField::create($name, $title, $parent);
+        $inline_link_field = InlineLinkField::create(
+            $name,
+            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TYPE", "Select a link type"),
+            $parent
+        );
 
         // determine if in the context of an inline editable Elemental element
         $inline_editable = $inline_link_field->hasInlineElementalParent();
