@@ -6,6 +6,7 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\LabelField;
 
 /**
@@ -19,6 +20,9 @@ class InlineLinkCompositeField extends CompositeField
 
         $children = FieldList::create();
 
+        /**
+         * @var Tabset
+         */
         $inline_link_field = InlineLinkField::create(
             $name,
             _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TYPE", "Select a link type"),
@@ -34,10 +38,11 @@ class InlineLinkCompositeField extends CompositeField
         /**
          * If there is a current link,
          * render a header field and the template for the current link
-         * A link might exist without a
+         * .. and a remove checkbox
+         * A link might exist without a Type, test for that
          */
         $has_current_link = false;
-        if($current_link_field && $current_link && $current_link->exists() && $current_link->Type) {
+        if($current_link_field && $current_link && $current_link->exists() && $current_link->Type && $current_link->getLinkURL()) {
             $has_current_link = true;
             $children->push(
                 LabelField::create(
@@ -49,15 +54,23 @@ class InlineLinkCompositeField extends CompositeField
                 // @var LiteralField
                 $current_link_field
             );
+            $children->push(
+                // Remove the current link
+                $remove_action = InlineLink_RemoveAction::create(
+                    $inline_link_field->prefixedFieldName( InlineLinkField::FIELD_NAME_REMOVELINK ),
+                    _t("NSWDPC\\InlineLinker\\InlineLinkField.DELETE_LINK", 'Delete this link')
+                )
+            );
+            $inline_link_field->setRemoveField( $remove_action );
         }
 
-        $link_title_field = TextField::create(
+        $link_title_field = InlineLink_TitleField::create(
             $inline_link_field->prefixedFieldName( InlineLinkField::FIELD_NAME_TITLE ),
             _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE", 'Title'),
             $inline_link_field->getRecordTitle()
         );
 
-        $link_openinnewwindow_field = CheckboxField::create(
+        $link_openinnewwindow_field = InlineLink_OpenInNewWindowField::create(
             $inline_link_field->prefixedFieldName( InlineLinkField::FIELD_NAME_OPEN_IN_NEW_WINDOW),
             _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW", 'Open in new window'),
             $inline_link_field->getRecordOpenInNewWindow()
@@ -102,7 +115,6 @@ class InlineLinkCompositeField extends CompositeField
             $this->setTitle($title);
             $this->setTag('div');
         }
-
 
     }
 

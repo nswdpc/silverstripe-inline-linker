@@ -55,9 +55,20 @@ class InlineLinkField extends TabSet {
      */
     protected $open_in_new_window_field;
 
+    /**
+     * @var InlineLink_RemoveAction
+     *
+     */
+    protected $remove_field;
+
+    /**
+     * @var bool
+     */
+    protected $is_removing_link = false;
 
     const FIELD_NAME_TYPE_SEPARATOR = "___";
 
+    const FIELD_NAME_REMOVELINK = "RemoveLink";
     const FIELD_NAME_TITLE = "Title";
     const FIELD_NAME_OPEN_IN_NEW_WINDOW = "OpenInNewWindow";
 
@@ -191,6 +202,21 @@ class InlineLinkField extends TabSet {
     }
 
     /**
+     * @param InlineLink_RemoveAction
+     */
+    public function setRemoveField(InlineLink_RemoveAction $field) {
+        $this->remove_field = $field;
+        return $this;
+    }
+
+    /**
+     * @return InlineLink_RemoveAction
+     */
+    public function getRemoveField() {
+        return $this->remove_field;
+    }
+
+    /**
      * This field handles data
      */
     public function hasData() {
@@ -202,6 +228,22 @@ class InlineLinkField extends TabSet {
      */
     public function saveInto(DataObjectInterface $record)
     {
+
+        // handle removal
+        $remove_field = $this->getRemoveField();
+        if($remove_field
+            && ($remove_field->dataValue() == 1)
+            && ($link = $this->getRecord())
+        ) {
+            if($link && $link->exists()) {
+                $this->getTitleField()->setSubmittedValue('');
+                $this->getOpenInNewWindowField()->setSubmittedValue(false);
+                $link->delete();
+                // do not proceed
+                return;
+            }
+        }
+
         $children = $this->getChildren()->dataFields();
         $field_with_value = null;
 
