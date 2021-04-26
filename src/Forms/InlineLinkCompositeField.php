@@ -32,8 +32,6 @@ class InlineLinkCompositeField extends CompositeField
         // determine if in the context of an inline editable Elemental element
         $inline_editable = $inline_link_field->hasInlineElementalParent();
 
-        $current_link = $inline_link_field->getRecord();
-        $current_link_field = $inline_link_field->getCurrentLinkField();
 
         /**
          * If there is a current link,
@@ -41,9 +39,8 @@ class InlineLinkCompositeField extends CompositeField
          * .. and a remove checkbox
          * A link might exist without a Type, test for that
          */
-        $has_current_link = false;
-        if($current_link_field && $current_link && $current_link->exists() && $current_link->Type && $current_link->getLinkURL()) {
-            $has_current_link = true;
+        $current_link_field = $inline_link_field->getCurrentLinkField();
+        if($current_link_field) {
             $children->push(
                 LabelField::create(
                     $name . "_CurrentLinkHeader",
@@ -80,7 +77,7 @@ class InlineLinkCompositeField extends CompositeField
         $inline_link_field->setTitleField( $link_title_field );
         $inline_link_field->setOpenInNewWindowField( $link_openinnewwindow_field );
 
-        if($has_current_link) {
+        if($current_link_field) {
             $children->push(
                 LabelField::create(
                     $name . "_ChangeLinkHeader",

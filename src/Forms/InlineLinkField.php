@@ -365,7 +365,7 @@ class InlineLinkField extends TabSet {
 
     /**
      * Get the current link record, if any
-     * @return mixed null|Link
+     * @return mixed null|\gorriecoe\Link\Models\Link
      */
     public function getRecord() {
         return $this->record;
@@ -470,17 +470,32 @@ class InlineLinkField extends TabSet {
     }
 
     /**
-     * @return LiteralField
+     * @return mixed null|LiteralField
      */
     public function getCurrentLinkField() {
-        $field = $this->CurrentLinkTemplate();
+        $field = $this->getCurrentLinkTemplate();
         return $field;
     }
 
-    protected function CurrentLinkTemplate($name = "ExistingLinkRecord") {
-        // literal field template for the current link
+    /**
+     * Returns whether a current link exists and it is valid
+     * A valid Link record has a Type value and a URL
+     * @return bool
+     */
+    public function hasCurrentLink() : bool {
+        return $this->record
+            && $this->record->exists()
+            && $this->record->Type
+            && $this->record->getLinkURL();
+    }
+
+    /**
+     * Return a literal field template for the current link
+     * @return mixed null|LiteralField
+     */
+    protected function getCurrentLinkTemplate($name = "ExistingLinkRecord") {
         $field = null;
-        if($this->record && $this->record->exists()) {
+        if($this->hasCurrentLink()) {
             $field = LiteralField::create(
                 $this->prefixedFieldName($name),
                 $this->record->renderWith('NSWDPC/InlineLinker/CurrentLinkTemplate')
