@@ -14,6 +14,7 @@ use SilverStripe\Forms\FormField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\TextField;
+use SilverStripe\Forms\Tip;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
@@ -722,9 +723,21 @@ class InlineLinkField extends CompositeField
                     $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
                     _t(
                         "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
-                        'Provide a link based on the type selected'
+                        'Enter a website URL, email address or phone number'
                     ),
                     $value
+                )->setDescription(
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_NOTE",
+                        'The value will be validated based on the link type you select'
+                    )
+                )->setTip(
+                    new Tip(
+                        _t(
+                            "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_RIGHTNOTE",
+                            'Website links should begin with https:// or http://'
+                        )
+                    )
                 )
             )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))
                 ->isEqualTo(self::LINKTYPE_URL)
