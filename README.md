@@ -11,7 +11,6 @@ Rather than take the content editor to a new data entry screen, the link can be 
 - Internal page
 - Existing file asset
 - Phone
-- 🧪 Choose a current link record (experimental - this feature is likely to be turned off or removed)
 
 The object of this module is to:
 
@@ -21,14 +20,14 @@ The object of this module is to:
 
 ## Usage
 
-Use the InlineLinkCompositeField to load the fields:
+Use the `InlineLinkField` to load the fields:
 
 ```php
 <?php
 namespace Some\Thing;
 
 use gorriecoe\Link\Models\Link;
-use NSWDPC\InlineLinker\InlineLinkCompositeField;
+use NSWDPC\InlineLinker\InlineLinkField;
 use SilverStripe\ORM\DataObject;
 
 //....
@@ -42,6 +41,7 @@ class MyThing extends DataObject {
     public function getCmsFields()
     {
         $fields = parent::getCmsFields();
+        $fields->removeByName('MyLinkID');// remove dropdownfield
         $fields->addFieldsToTab(
             'Root.Main', [
                 //-- some fields
@@ -53,7 +53,7 @@ class MyThing extends DataObject {
     }
 
     public function getLinkField() {
-        return InlineLinkCompositeField::create(
+        return InlineLinkField::create(
                 'MyLink',
                 _t(__CLASS__ . '.LINK', 'My link title'),
                 $this

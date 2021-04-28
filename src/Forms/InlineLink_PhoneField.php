@@ -18,6 +18,6 @@ class InlineLink_PhoneField extends TelField {
      */
     protected $inputType = 'tel';
 
-    protected $link_type = InlineLinkCompositeField::LINKTYPE_PHONE;
+    protected $link_type = InlineLinkField::LINKTYPE_PHONE;
 
 }

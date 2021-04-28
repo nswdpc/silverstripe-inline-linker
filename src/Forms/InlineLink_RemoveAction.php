@@ -3,7 +3,6 @@
 namespace NSWDPC\InlineLinker;
 
 use SilverStripe\Forms\CheckboxField;
-use SilverStripe\ORM\DataObjectInterface;
 
 /**
  * Subclassed field to provide a remote link checkbox
