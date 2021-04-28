@@ -17,6 +17,9 @@ The object of this module is to:
 - allow editing and creation of links within the context of the parent record
 - have no Javascript dependencies, beyond those provided by core framework fields
 - act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only)
+- publish Link `File` and `Sitetree` relations when the parent record is published, via the Silverstripe ownership API
+
+<img src="./docs/img/pre-release.png">
 
 ## Usage
 
@@ -88,6 +91,8 @@ composer require nswdpc/silverstripe-inline-linker
 ## Configuration
 
 None, yet
+
+You can find the extensions used in [./_config/config.yml](config.yml)
 
 ## Maintainers
 
