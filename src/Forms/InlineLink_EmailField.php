@@ -1,8 +1,12 @@
 <?php
 
 namespace NSWDPC\InlineLinker;
-use SilverStripe\Forms\EmailField;
 
+use Codem\Utilities\HTML5\EmailField;
+
+/**
+ * An email field
+ */
 class InlineLink_EmailField extends EmailField {
 
     use InlineLink;

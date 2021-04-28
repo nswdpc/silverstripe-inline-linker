@@ -22,11 +22,18 @@ class InlineLink_TitleField extends TextField {
     }
 
     /**
-     * Saving of this value happens in the {@link InlineLinkCompositeField}
+     * Saving of this value happens in the {@link InlineLinkField}
      */
     public function saveInto(DataObjectInterface $record)
     {
         return;
+    }
+
+    /**
+     * Saving of this value happens in the {@link InlineLinkField}
+     */
+    public function canSubmitValue() : bool {
+        return false;
     }
 
 }

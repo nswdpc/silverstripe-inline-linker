@@ -16,8 +16,11 @@
         }
     ],
     "require": {
+        "codem/silverstripe-html5-inputs": "^0.1",
+        "fromholdio/silverstripe-externalurlfield" : "^1",
         "gorriecoe/silverstripe-link": "^1.0.0",
-        "fromholdio/silverstripe-externalurlfield" : "^1"
+        "silverstripe/asset-admin": "^1",
+        "unclecheese/display-logic": "^2"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.7 | ^7 | ^8 | ^9",
