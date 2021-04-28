@@ -1,25 +1,38 @@
 # Inline linking field for Silverstripe
 
-This module provides a basic **inline** linking field, saving into the Link model provided by gorriecoe/silverstripe-link
+This module provides a basic **inline** linking field, saving into the Link model provided by [gorriecoe/silverstripe-link](https://github.com/gorriecoe/silverstripe-link)
 
 This module is under development and should not be used on production websites.
 
-Rather than take the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
+Pull requests are welcome.
+
+## Background
+
+Rather than taking the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
 
 - Enter an external URL
 - Email address
-- Internal page
-- Existing file asset
+- Select a page
+- Select a file asset
 - Phone
 
 The object of this module is to:
 
 - allow editing and creation of links within the context of the parent record
 - have no Javascript dependencies, beyond those provided by core framework fields
-- act as a drop-in replacement for the LinkField provided by gorriecoe/silverstripe-linkfield (for has-one relations only)
+- act as a drop-in replacement for the LinkField provided by [gorriecoe/silverstripe-linkfield](https://github.com/gorriecoe/silverstripe-linkfield) (for has-one relations only)
 - publish Link `File` and `Sitetree` relations when the parent record is published, via the Silverstripe ownership API
 
+The field currently looks like this when used in an [inline editable Element](https://github.com/silverstripe/silverstripe-elemental)
+
 <img src="./docs/img/pre-release.png">
+
+
+### Elemental inline editing
+
+We use [Display Logic](https://github.com/unclecheese/silverstripe-display-logic) to display the relevant link field.
+
+As this does not work with [inline Elemental elements](https://github.com/silverstripe/silverstripe-elemental#in-line-editing), all the relevant link value fields are displayed. You can workaround this by declaring your element `private static $inline_editable = false;`.
 
 ## Usage
 
@@ -92,7 +105,7 @@ composer require nswdpc/silverstripe-inline-linker
 
 None, yet
 
-You can find the extensions used in [./_config/config.yml](config.yml)
+You can find the extensions used in [config.yml](./_config/config.yml).
 
 ## Maintainers
 
