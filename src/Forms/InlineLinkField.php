@@ -78,6 +78,7 @@ class InlineLinkField extends CompositeField
     const LINKTYPE_SITETREE = 'SiteTree';
     const LINKTYPE_PHONE = 'Phone';
     const LINKTYPE_FILE = 'File';
+    const LINKTYPE_TYPEDEFINED = 'BasedOnType';
 
     public function __construct($name, $title, DataObject $parent) {
         // push all child fields
@@ -102,7 +103,13 @@ class InlineLinkField extends CompositeField
             $value = $component->Type;
         }
         if(!($component instanceof Link)) {
-            throw new \InvalidArgumentException("Component {$name} must be an instance of Link::class");
+            throw new \InvalidArgumentException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.INVALID_COMPONENT",
+                "Error: component {name} must be an instance of Link",
+                [
+                    'name' => $this->name
+                ]
+            ));
         }
 
         $this->setRecord($component);
@@ -129,20 +136,29 @@ class InlineLinkField extends CompositeField
         if($has) {
             $remove_action = InlineLink_RemoveAction::create(
                 $this->prefixedFieldName( self::FIELD_NAME_REMOVELINK ),
-                _t("NSWDPC\\InlineLinker\\InlineLinkField.DELETE_LINK", 'Delete this link')
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.DELETE_LINK",
+                    'Delete this link'
+                )
             );
             $this->setRemoveField( $remove_action );
         }
 
         $link_title_field = InlineLink_TitleField::create(
             $this->prefixedFieldName( self::FIELD_NAME_TITLE ),
-            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE", 'Title'),
+            _t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE",
+                'Title'
+            ),
             $this->getRecordTitle()
         );
 
         $link_openinnewwindow_field = InlineLink_OpenInNewWindowField::create(
             $this->prefixedFieldName( self::FIELD_NAME_OPEN_IN_NEW_WINDOW),
-            _t("NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW", 'Open in new window'),
+            _t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW",
+                'Open in new window'
+            ),
             [],
             $this->getRecordOpenInNewWindow()
         );
@@ -221,7 +237,10 @@ class InlineLinkField extends CompositeField
 
         if(!is_array($values)) {
             // cannot proceed unless we have some values
-            throw new ValidationException( _t("NSWDPC\\InlineLinker\\InlineLinkField.NO_VALUES_SUPPLIED_SAVE", "No values were supplied to save") );
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_VALUES_SUPPLIED_SAVE",
+                "No values were supplied to save"
+            ));
         }
 
         // clear data field values
@@ -344,18 +363,33 @@ class InlineLinkField extends CompositeField
         $type_field = $this->children->dataFieldByName( $this->prefixedFieldName( self::FIELD_NAME_TYPE ) );
         // no type field
         if(!$type_field) {
-            throw new ValidationException("The link type could not be determined or is unknown");
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_FIELD_ERROR",
+                "The link type could not be determined or is unknown"
+            ));
         }
 
         $type = $type_field->dataValue();
         // @var string eg Email
         if(!$type) {
-            throw new ValidationException("The link type was empty");
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_ERROR",
+                "Please select the link type"
+            ));
         }
 
+        // grab the value field based on the Type selected
         $value_field = $this->children->dataFieldByName( $this->prefixedFieldName( $type ) );
         if(!$value_field) {
-            throw new ValidationException("The link value could not be found");
+            // maybe 'BasedOnType' multi link field value
+            $value_field = $this->children->dataFieldByName( $this->prefixedFieldName( self::LINKTYPE_TYPEDEFINED) );
+        }
+
+        if(!$value_field) {
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_VALUE_ERROR",
+                "A value for the link could not be found"
+            ));
         }
 
         //set model options
@@ -452,7 +486,13 @@ class InlineLinkField extends CompositeField
                 ];
                 break;
             default:
-                throw new ValidationException("The link of the type '{$type}' cannot be saved'");
+                throw new ValidationException(_t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.UNHANDLED_LINK_TYPE_ERROR",
+                    "The link of the type '{type}' cannot be saved'",
+                    [
+                        'type' => $type
+                    ]
+                ));
                 break;
         }
 
@@ -638,10 +678,24 @@ class InlineLinkField extends CompositeField
         $record = $this->getRecord();
         $type = self::LINKTYPE_URL;
         $file_list = null;
+        $value = '';
         if($record && $record->exists()) {
             $type = $record->Type;
             $file_list = ArrayList::create();
             $file_list->push( $record->File() );
+            switch($record->Type) {
+                case self::LINKTYPE_URL:
+                    $value = $record->URL;
+                    break;
+                case self::LINKTYPE_EMAIL:
+                    $value = $record->Email;
+                    break;
+                case self::LINKTYPE_PHONE:
+                    $value = $record->Phone;
+                    break;
+                default:
+                    $value = '';
+            }
         }
 
         $fields = CompositeField::create(
@@ -664,6 +718,21 @@ class InlineLinkField extends CompositeField
             //->setAttribute('onchange', 'function() { console.log(\'changed\'); }'),
 
             Wrapper::create(
+                InlineLink_TypeDefinedTextField::create(
+                    $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
+                        'Provide a link based on the type selected'
+                    ),
+                    $value
+                )
+            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))
+                ->isEqualTo(self::LINKTYPE_URL)
+                ->orIf()->isEqualTo(self::LINKTYPE_EMAIL)
+                ->orIf()->isEqualTo(self::LINKTYPE_PHONE)
+                ->end(),
+
+            Wrapper::create(
                 InlineLink_SiteTreeField::create(
                     $this->prefixedFieldName(self::LINKTYPE_SITETREE),
                     _t(
@@ -675,27 +744,6 @@ class InlineLinkField extends CompositeField
             )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_SITETREE)->end(),
 
             Wrapper::create(
-                InlineLink_URLField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_URL),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.EXTERNAL_URL",
-                        'Provide an external URL'
-                    ),
-                    (isset($record->URL) ? $record->URL : '')
-                )->setConfig([
-                    'html5validation' => true,
-                    'defaultparts' => [
-                        'scheme' => 'https'
-                    ],
-                ])->setDescription(
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.EXTERNAL_URL_NOTE",
-                        'The URL should start with an https:// or http://'
-                    )
-                )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_URL)->end(),
-
-            Wrapper::create(
                 InlineLink_FileField::create(
                     $this->prefixedFieldName(self::LINKTYPE_FILE),
                     _t(
@@ -704,39 +752,7 @@ class InlineLinkField extends CompositeField
                     ),
                     $file_list
                 )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_FILE)->end(),
-
-            Wrapper::create(
-                InlineLink_EmailField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_EMAIL),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_EMAIL_ADDRESS",
-                        'Enter a valid email address'
-                    ),
-                    (isset($record->Email) ? $record->Email : '')
-                )->setDescription(
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.EMAIL_NOTE",
-                        'eg. \'someone@example.com\''
-                    )
-                )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_EMAIL)->end(),
-
-            Wrapper::create(
-                InlineLink_PhoneField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_PHONE),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.PHONENUMBER",
-                        'Phone Number'
-                    ),
-                    (isset($record->Phone) ? $record->Phone : '')
-                )->setDescription(
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.PHONE_NOTE",
-                        'Tip: you can use the country calling code to ensure the number is correctly dialled eg. <code>+61 400 000 000</code>'
-                    )
-                )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_PHONE)->end()
+            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_FILE)->end()
         );
 
         $this->extend('updateLinkFields', $fields);
