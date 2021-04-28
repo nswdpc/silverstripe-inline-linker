@@ -14,6 +14,6 @@ class InlineLink_EmailField extends EmailField {
      */
     protected $inputType = 'email';
 
-    protected $link_type = InlineLinkField::LINKTYPE_EMAIL;
+    protected $link_type = InlineLinkCompositeField::LINKTYPE_EMAIL;
 
 }

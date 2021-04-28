@@ -7,7 +7,7 @@ class InlineLink_FileField extends UploadField {
 
     use InlineLink;
 
-    protected $link_type = InlineLinkField::LINKTYPE_FILE;
+    protected $link_type = InlineLinkCompositeField::LINKTYPE_FILE;
 
     /**
      * Set if uploading new files is enabled.

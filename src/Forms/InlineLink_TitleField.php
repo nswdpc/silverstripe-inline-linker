@@ -22,7 +22,7 @@ class InlineLink_TitleField extends TextField {
     }
 
     /**
-     * Saving of this value happens in the {@link InlineLinkField}
+     * Saving of this value happens in the {@link InlineLinkCompositeField}
      */
     public function saveInto(DataObjectInterface $record)
     {

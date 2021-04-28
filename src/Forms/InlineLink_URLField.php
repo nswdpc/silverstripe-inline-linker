@@ -14,6 +14,6 @@ class InlineLink_URLField extends ExternalURLField {
      */
     protected $inputType = 'url';
 
-    protected $link_type = InlineLinkField::LINKTYPE_URL;
+    protected $link_type = InlineLinkCompositeField::LINKTYPE_URL;
 
 }

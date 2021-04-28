@@ -9,6 +9,6 @@ class InlineLink_SiteTreeField extends TreeDropdownField {
 
     protected $sourceObject = SiteTree::class;
 
-    protected $link_type = InlineLinkField::LINKTYPE_SITETREE;
+    protected $link_type = InlineLinkCompositeField::LINKTYPE_SITETREE;
 
 }
