@@ -2,35 +2,32 @@
 
 namespace NSWDPC\InlineLinker;
 
-use BurnBright\ExternalURLField\ExternalURLField;
 use DNADesign\Elemental\Models\BaseElement;
 use DNADesign\Elemental\Controllers\ElementalAreaController;
 use gorriecoe\Link\Models\Link;
-use SilverStripe\AssetAdmin\Forms\UploadField;
-use SilverStripe\Assets\File;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
+use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\DropdownField;
-use SilverStripe\Forms\CheckboxField;
-use SilverStripe\Forms\HeaderField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormField;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\Forms\Tab;
-use SilverStripe\Forms\Tabset;
+use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\TextField;
-use SilverStripe\Forms\TreeDropdownField;
+use SilverStripe\Forms\Tip;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\SecurityToken;
-use SilverStripe\View\Requirements;
+use UncleCheese\DisplayLogic\Forms\Wrapper;
 
 /**
- * The Inline link field extends TabSet, provides child fields that
- * save to the gorriecode/link model
+ * Subclass for specific composite field handling, currently not in use
+ * Could be useful for future configuration
  */
-class InlineLinkField extends TabSet {
+class InlineLinkField extends CompositeField
+{
 
     /**
      * @var gorriecoe\Link\Models\Link|null
@@ -49,56 +46,152 @@ class InlineLinkField extends TabSet {
     protected $title_field;
 
     /**
-     * @var CheckboxField
+     * @var OptionsetField
      *
      */
     protected $open_in_new_window_field;
 
+    /**
+     * @var InlineLink_RemoveAction
+     *
+     */
+    protected $remove_field;
+
+    /**
+     * @var SelectionGroup
+     */
+    protected $selection_group;
+
+    /**
+     * @var bool
+     */
+    protected $is_removing_link = false;
 
     const FIELD_NAME_TYPE_SEPARATOR = "___";
 
+    const FIELD_NAME_REMOVELINK = "RemoveLink";
     const FIELD_NAME_TITLE = "Title";
     const FIELD_NAME_OPEN_IN_NEW_WINDOW = "OpenInNewWindow";
+    const FIELD_NAME_TYPE = "Type";
 
     const LINKTYPE_EMAIL = 'Email';
     const LINKTYPE_URL = 'URL';
-    const LINKTYPE_LINK = 'Link';
     const LINKTYPE_SITETREE = 'SiteTree';
     const LINKTYPE_PHONE = 'Phone';
     const LINKTYPE_FILE = 'File';
+    const LINKTYPE_TYPEDEFINED = 'BasedOnType';
 
-    public function __construct(string $name, string $title, DataObject $parent)
-    {
+    public function __construct($name, $title, DataObject $parent) {
+        // push all child fields
+        parent::__construct($this->collectChildFields($name, $title, $parent));
+        $this->setName($name);
+    }
+
+    /**
+     * Collect all fields to be used in the CompositeField
+     */
+    protected function collectChildFields($name, $title, DataObject $parent) : FieldList {
+
         // set name and title early
         $this->name = $name;
         $this->title = $title;
+        $value = null;
 
         // store record and parent
         $this->parent = $this->record = null;
-        if($parent instanceof DataObject && $component = $parent->getComponent($name)) {
+        if($component = $parent->getComponent($name)) {
             $this->parent = $parent;
+            $value = $component->Type;
         }
         if(!($component instanceof Link)) {
-            throw new \Exception("Component {$name} must be an instance of Link::class");
+            throw new \InvalidArgumentException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.INVALID_COMPONENT",
+                "Error: component {name} must be an instance of Link",
+                [
+                    'name' => $this->name
+                ]
+            ));
         }
 
         $this->setRecord($component);
 
-        // get all available fields
-        $tabs = $this->getAvailableFields();
-        parent::__construct($name, $title, $tabs);
-    }
+        // determine if in the context of an inline editable Elemental element
+        $inline_editable = $this->hasInlineElementalParent();
 
-    /**
-     * Once a record is created, the ID value of the Link is the data value for saving
-     * @return mixed
-     */
-    public function dataValue() {
-        if($this->record instanceof Link) {
-            return $this->record->ID;
+        if($inline_editable) {
+            $this->setLegend($title);
+            $this->setTag('fieldset');
         } else {
-            return null;
+            $this->setTitle($title);
+            $this->setTag('div');
         }
+
+        /**
+         * If there is a current link,
+         * render a header field and the template for the current link
+         * .. and a remove checkbox
+         * A link might exist without a Type, test for that
+         */
+        $has = $this->hasCurrentLink();
+        $remove_action = null;
+        if($has) {
+            $remove_action = InlineLink_RemoveAction::create(
+                $this->prefixedFieldName( self::FIELD_NAME_REMOVELINK ),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.DELETE_LINK",
+                    'Delete this link'
+                )
+            );
+            $this->setRemoveField( $remove_action );
+        }
+
+        $link_title_field = InlineLink_TitleField::create(
+            $this->prefixedFieldName( self::FIELD_NAME_TITLE ),
+            _t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.LINK_TITLE",
+                'Title'
+            ),
+            $this->getRecordTitle()
+        );
+
+        $link_openinnewwindow_field = InlineLink_OpenInNewWindowField::create(
+            $this->prefixedFieldName( self::FIELD_NAME_OPEN_IN_NEW_WINDOW),
+            _t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW",
+                'Open in new window'
+            ),
+            [],
+            $this->getRecordOpenInNewWindow()
+        );
+
+        $this->setTitleField( $link_title_field );
+        $this->setOpenInNewWindowField( $link_openinnewwindow_field );
+
+        $children = FieldList::create();
+
+        $children->push(
+            // common fields
+            $link_title_field,
+        );
+
+        $children->push(
+            // common fields
+            $link_openinnewwindow_field
+        );
+
+        // selection group
+        $children->push(
+            $this->getLinkFields() // link type field collection
+        );
+
+        if($remove_action) {
+            $children->push(
+                $remove_action
+            );
+        }
+
+        return $children;
+
     }
 
     /**
@@ -120,6 +213,7 @@ class InlineLinkField extends TabSet {
          * and this becomes easier
          */
         if($inline = $this->hasInlineElementalParent()) {
+
             $controller = Controller::curr();
             $request = $controller->getRequest();
             $post = $request->requestVars();
@@ -132,11 +226,11 @@ class InlineLinkField extends TabSet {
             $values_all = ElementalAreaController::removeNamespacesFromFields($post, $this->parent->ID);
             // mogrify them into something we expect
             if(is_array($values_all)) {
-                // grab any {$this->name}__{type} values into an array
+                // grab any {$this->name}__{index} values into an array
                 foreach($values_all as $name => $value) {
-                    $type = $this->getTypeFromName($name);
-                    if($type) {
-                        $values[ $type ] = $value;
+                    $index = $this->getIndexFromName($name);
+                    if($index) {
+                        $values[ $index ] = $value;
                     }
                 }
             }
@@ -144,50 +238,83 @@ class InlineLinkField extends TabSet {
 
         if(!is_array($values)) {
             // cannot proceed unless we have some values
-            throw new ValidationException( _t(__CLASS__. ".NO_VALUES_SUPPLIED_SAVE", "No values were supplied to save") );
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_VALUES_SUPPLIED_SAVE",
+                "No values were supplied to save"
+            ));
         }
 
-        foreach($values as $type => $value) {
-            if($type == self::FIELD_NAME_TITLE) {
+        // clear data field values
+        $fields = $this->children->dataFields();
+        foreach($fields as $field) {
+            $field->setSubmittedValue( null );
+        }
+
+        // set submitted values
+        foreach($values as $index => $value) {
+            if($index == self::FIELD_NAME_TITLE) {
                 // handle title field
                 $this->getTitleField()->setSubmittedValue( $value );
-            } else if($type == self::FIELD_NAME_OPEN_IN_NEW_WINDOW) {
+            } else if($index == self::FIELD_NAME_OPEN_IN_NEW_WINDOW) {
                 // handle open in new window field
                 $this->getOpenInNewWindowField()->setSubmittedValue( $value );
-            } else if($field = $this->children->dataFieldByName( $this->prefixedFieldName( $type ) )) {
+            } else if($field = $this->children->dataFieldByName( $this->prefixedFieldName( $index ) )) {
+                // set the submitted value on the relevant field
                 $field->setSubmittedValue( $value );
             }
         }
     }
 
     /**
-     * @param TextField
+     * @param InlineLink_TitleField
      */
-    public function setTitleField(TextField $field) {
+    public function setTitleField(InlineLink_TitleField $field) {
         $this->title_field = $field;
         return $this;
     }
 
     /**
-     * @return TextField
+     * @return InlineLink_TitleField
      */
     public function getTitleField() {
         return $this->title_field;
     }
 
     /**
-     * @param CheckboxField
+     * @param InlineLink_OpenInNewWindowField
      */
-    public function setOpenInNewWindowField(CheckboxField $field) {
+    public function setOpenInNewWindowField(InlineLink_OpenInNewWindowField $field) {
         $this->open_in_new_window_field = $field;
         return $this;
     }
 
     /**
-     * @return CheckboxField
+     * @return InlineLink_OpenInNewWindowField
      */
     public function getOpenInNewWindowField() {
         return $this->open_in_new_window_field;
+    }
+
+    /**
+     * @param InlineLink_RemoveAction
+     */
+    public function setRemoveField(InlineLink_RemoveAction $field) {
+        $this->remove_field = $field;
+        return $this;
+    }
+
+    /**
+     * @return InlineLink_RemoveAction
+     */
+    public function getRemoveField() {
+        return $this->remove_field;
+    }
+
+    /**
+     * @return SelectionGroup
+     */
+    public function getLinkTypeFields() {
+        return $this->selection_group;
     }
 
     /**
@@ -197,27 +324,81 @@ class InlineLinkField extends TabSet {
         return true;
     }
 
+    public function canSubmitValue() : bool {
+        return true;
+    }
+
+    /**
+     * This field handles all the saving
+     */
+    public function collateDataFields(&$list, $saveableOnly = false)
+    {
+        return;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function saveInto(DataObjectInterface $record)
     {
-        $children = $this->getChildren()->dataFields();
-        $field_with_value = null;
 
-        // find a child field with a value, use that as the value for the link
-        foreach($children as $field) {
-            $name = $field->getName();
-            $value = $field->dataValue();
-            if($value) {
-                $field_with_value = $field;
-                break;
+        // handle removal
+        $remove_field = $this->getRemoveField();
+        if($remove_field
+            && ($remove_field->dataValue() == 1)
+            && ($link = $this->getRecord())
+        ) {
+            if($link && $link->exists()) {
+                // clear all field submitted
+                // avoids re-display with data
+                foreach($this->children->dataFields() as $field) {
+                    $field->setSubmittedValue(null);
+                }
+                $link->delete();
+                // do not proceed
+                return;
             }
         }
 
+        // @var FormField
+        $type_field = $this->children->dataFieldByName( $this->prefixedFieldName( self::FIELD_NAME_TYPE ) );
+        // no type field
+        if(!$type_field) {
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_FIELD_ERROR",
+                "The link type could not be determined or is unknown"
+            ));
+        }
+
+        $type = $type_field->dataValue();
+        // @var string eg Email
+        if(!$type) {
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_ERROR",
+                "Please select the link type"
+            ));
+        }
+
+        // grab the value field based on the Type selected
+        $value_field = $this->children->dataFieldByName( $this->prefixedFieldName( $type ) );
+        if(!$value_field) {
+            // maybe 'BasedOnType' multi link field value
+            $value_field = $this->children->dataFieldByName( $this->prefixedFieldName( self::LINKTYPE_TYPEDEFINED) );
+        }
+
+        if(!$value_field) {
+            throw new ValidationException(_t(
+                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_VALUE_ERROR",
+                "A value for the link could not be found"
+            ));
+        }
+
         //set model options
-        $open_in_new_window = "";
-        $title = "Auto-created title for a link in " . $this->parent->getTitle();
+        $open_in_new_window = 0;
+        $title =_t(
+            "NSWDPC\\InlineLinker\\InlineLinkField.AUTO_TITLE",
+            "Auto-created title for a link in " . $this->parent->getTitle()
+        );
         if($open_in_new_window_field = $this->getOpenInNewWindowField()) {
             $open_in_new_window = $open_in_new_window_field->dataValue();
         }
@@ -225,10 +406,9 @@ class InlineLinkField extends TabSet {
             $title = $title_field->dataValue();
         }
 
-        // create or update the current link record
-        if($field_with_value) {
+        if($type) {
             // apply the value found
-            $link = $this->createOrAssociateLink($field_with_value);
+            $link = $this->createOrAssociateLink($type, $value_field);
         } else {
             // might be updating or creating a link with no value
             $link = $this->getRecord();
@@ -252,21 +432,24 @@ class InlineLinkField extends TabSet {
 
     /**
      * Create or save a link using the value from the form field
-     * @todo final validation on the value / field ?
-     * @param FormField the child field carrying the value to be saved
+     * @param string $type eg. 'Email'
+     * @param mixed $value eg. 'bob@example.com'
+     * @param FormField $field the Form field holding the data related to the type
+     * @return Link
      */
-    protected function createOrAssociateLink(FormField $field) {
-        $type = $this->getTypeFromName($field->getName());
+    protected function createOrAssociateLink(string $type, FormField $field) : Link {
         $value = $field->dataValue();
-        $data = [];
+
+        // defaults
+        $base = [
+            'URL' => null,
+            'FileID' => null,
+            'Email' => null,
+            'Phone' => null,
+            'SiteTreeID' => null,
+        ];
+
         switch($type) {
-            case self::LINKTYPE_LINK:
-                // pre-existing Link record
-                $data = [
-                    'LinkID' => $value,
-                    'Type' => $type
-                ];
-                break;
             case self::LINKTYPE_SITETREE:
                 $data = [
                     'SiteTreeID' => $value,
@@ -304,10 +487,18 @@ class InlineLinkField extends TabSet {
                 ];
                 break;
             default:
-                throw new ValidationException("The link of the type '{$type}' cannot be saved'");
+                throw new ValidationException(_t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.UNHANDLED_LINK_TYPE_ERROR",
+                    "The link of the type '{type}' cannot be saved'",
+                    [
+                        'type' => $type
+                    ]
+                ));
                 break;
         }
 
+        // apply data over defaults
+        $data = array_merge($base, $data);
         $link = $this->getRecord();
         if($link instanceof Link) {
             // update the existing link
@@ -330,10 +521,18 @@ class InlineLinkField extends TabSet {
 
     /**
      * Get the current link record, if any
-     * @return mixed null|Link
+     * @return mixed null|\gorriecoe\Link\Models\Link
      */
     public function getRecord() {
         return $this->record;
+    }
+
+    /**
+     * Returns whether the type passed in as the current Link.Type
+     * @return bool
+     */
+    protected function isTypeCurrent($type) : bool {
+        return !empty($this->record->Type) && $this->record->Type == $type;
     }
 
     /**
@@ -351,33 +550,33 @@ class InlineLinkField extends TabSet {
     }
 
     /**
-     * Return a prefixed field name, e./g LinkTarget[Email]
-     * @param string $type the type of the link
+     * Return a prefixed field name, eg. LinkTarget[Email]
+     * @param string $index eg. Email, Type, OpenInNewWindow...
      * @return string
      */
-    public function prefixedFieldName($type) {
+    public function prefixedFieldName($index) {
         if($this->hasInlineElementalParent()) {
             /*
              * Cannot use index notation due to
              * https://github.com/dnadesign/silverstripe-elemental/issues/381
              * https://github.com/silverstripe/silverstripe-admin/issues/639
              */
-            return $this->getName() . self::FIELD_NAME_TYPE_SEPARATOR . $type;
+            return $this->getName() . self::FIELD_NAME_TYPE_SEPARATOR . $index;
         } else {
             /**
              * Can use indexed notation - either a non inline editable element
              * or a normal dataobject edit form
              */
-            return $this->getName() . "[{$type}]";
+            return $this->getName() . "[{$index}]";
         }
     }
 
     /**
-     * Work out the type based on the field name
+     * Work out the index based on the field name
      * If the parent is an inline editable element, take that into account
      * @return string
      */
-    protected function getTypeFromName($complete_field_name) {
+    protected function getIndexFromName($complete_field_name) {
         $type = "";
         if($this->hasInlineElementalParent()) {
             // the field name should start with the prefix...
@@ -387,19 +586,19 @@ class InlineLinkField extends TabSet {
             }
             // Get type using separator
             $parts = explode(self::FIELD_NAME_TYPE_SEPARATOR, $complete_field_name);
-            // 0=parentname 1=type
-            $type = isset($parts[1]) ? $parts[1] : '';
-            return $type;
+            // 0=parentname 1=type eg. LinkTarget__Index
+            $index = isset($parts[1]) ? $parts[1] : '';
+            return $index;
         } else {
-            // Non inline_editable elements or standard modeladmin, using field[type] naming
+            // Non inline_editable elements or standard modeladmin, using field[index] naming
             $result = [];
             $name = $this->getName();
             parse_str($complete_field_name, $results);
             if(isset($results[ $name ])) {
                 $target = $results[ $name ];
-                $type = key($target);
+                $index = key($target);
             }
-            return $type;
+            return $index;
         }
     }
 
@@ -428,102 +627,148 @@ class InlineLinkField extends TabSet {
 
     /**
      * @return LiteralField
+     * @deprecated
      */
     public function CurrentLink() {
-        $field = $this->CurrentLinkTemplate();
+        return $this->getCurrentLinkField();
+    }
+
+    /**
+     * @return mixed null|LiteralField
+     */
+    public function getCurrentLinkField() {
+        $field = $this->getCurrentLinkTemplate();
         return $field;
     }
 
-    protected function CurrentLinkTemplate($name = "ExistingLinkRecord") {
-        // literal field template for the current link
+    /**
+     * Returns whether a current link exists and it is valid
+     * A valid Link record has a Type value and a URL
+     * @return bool
+     */
+    public function hasCurrentLink() : bool {
+        return $this->record
+            && $this->record->exists()
+            && $this->record->Type
+            && $this->record->getLinkURL();
+    }
+
+    /**
+     * Return a literal field template for the current link
+     * @return mixed null|LiteralField
+     */
+    protected function getCurrentLinkTemplate($name = "ExistingLinkRecord") {
         $field = null;
-        if($this->record && $this->record->exists()) {
+        if($this->hasCurrentLink()) {
+            $html = $this->record->renderWith('NSWDPC/InlineLinker/CurrentLinkTemplate');
             $field = LiteralField::create(
                 $this->prefixedFieldName($name),
-                $this->record->renderWith('NSWDPC/InlineLinker/CurrentLinkTemplate')
+                $html
             );
         }
         return $field;
     }
 
     /**
-     * Returns available fields in order of precedence
-     * @return array
+     * Return all available Link Fields
+     * Modify fields via the updateLinkFields extension method
+     * @return CompositeField
      */
-    protected function getAvailableFields() {
+    public function getLinkFields() : CompositeField {
 
-        // get links
-        $links = Link::get()->sort('Title ASC');
-        if($this->record && $this->record->exists()) {
-            // except the current one
-            $links = $links->exclude("ID", $this->record->ID);
+        $record = $this->getRecord();
+        $type = self::LINKTYPE_URL;
+        $file_list = null;
+        $value = '';
+        if($record && $record->exists()) {
+            $type = $record->Type;
+            $file_list = ArrayList::create();
+            $file_list->push( $record->File() );
+            switch($record->Type) {
+                case self::LINKTYPE_URL:
+                    $value = $record->URL;
+                    break;
+                case self::LINKTYPE_EMAIL:
+                    $value = $record->Email;
+                    break;
+                case self::LINKTYPE_PHONE:
+                    $value = $record->Phone;
+                    break;
+                default:
+                    $value = '';
+            }
         }
 
-        $fields = [
+        $fields = CompositeField::create(
 
-            Tab::create(
-                _t(__CLASS__ . ".EXTERNAL", "External"),
-                InlineLink_URLField::create(
-                    $this->prefixedFieldName('URL'),
-                    _t( __CLASS__ . '.EXTERNAL_URL', 'Provide an external URL')
-                )->setConfig([
-                    'html5validation' => true,
-                    'defaultparts' => [
-                        'scheme' => 'https'
-                    ],
-                ])->setDescription(
-                    _t( __CLASS__ . '.EXTERNAL_URL_NOTE', 'The URL should start with an https:// or http://')
-                )
-            ),
+            DropdownField::create(
+                $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.THE_LINK_TYPE",
+                    "The link type"
+                ),
+                [
+                    self::LINKTYPE_SITETREE => _t("NSWDPC\\InlineLinker\\InlineLinkField.PAGE_TYPE", 'A page on this website'),
+                    self::LINKTYPE_URL => _t("NSWDPC\\InlineLinker\\InlineLinkField.URL_TYPE", 'An external URL (including optional #anchor)'),
+                    self::LINKTYPE_EMAIL => _t("NSWDPC\\InlineLinker\\InlineLinkField.EMAIL_TYPE", 'An email address'),
+                    self::LINKTYPE_PHONE => _t("NSWDPC\\InlineLinker\\InlineLinkField.PHONE_TYPE", 'A phone number'),
+                    self::LINKTYPE_FILE => _t("NSWDPC\\InlineLinker\\InlineLinkField.FILE_TYPE", 'A file on this website')
+                ],
+                $type
+            )->setValue($type),
+            //->setAttribute('onchange', 'function() { console.log(\'changed\'); }'),
 
-            Tab::create(
-                _t(__CLASS__ . ".LINK", "Link"),
-                InlineLink_LinkField::create(
-                    $this->prefixedFieldName('Link'),
-                    _t( __CLASS__ . '.EXISTING_LINK', 'Choose an existing link record'),
-                    $links->map('ID','TitleWithURL')
-                )->setEmptyString('')
-            ),
-
-            Tab::create(
-                _t(__CLASS__ . ".Email", "Email"),
-                InlineLink_EmailField::create(
-                    $this->prefixedFieldName('Email'),
-                    _t( __CLASS__ . '.ENTER_EMAIL_ADDRESS', 'Enter a valid email address')
+            Wrapper::create(
+                InlineLink_TypeDefinedTextField::create(
+                    $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
+                        'Enter a website URL, email address or phone number'
+                    ),
+                    $value
                 )->setDescription(
-                    _t( __CLASS__ . '.EMAIL_NOTE', 'e.g. \'someone@example.com\'')
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_NOTE",
+                        'The value will be validated based on the link type you select'
+                    )
+                )->setTip(
+                    new Tip(
+                        _t(
+                            "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_RIGHTNOTE",
+                            'Website links should begin with https:// or http://'
+                        )
+                    )
                 )
-            ),
+            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))
+                ->isEqualTo(self::LINKTYPE_URL)
+                ->orIf()->isEqualTo(self::LINKTYPE_EMAIL)
+                ->orIf()->isEqualTo(self::LINKTYPE_PHONE)
+                ->end(),
 
-            Tab::create(
-                _t(__CLASS__ . ".Page", "Page"),
+            Wrapper::create(
                 InlineLink_SiteTreeField::create(
-                    $this->prefixedFieldName('SiteTree'),
-                    _t( __CLASS__ . '.CHOOSE_PAGE_ON_THIS_WEBSITE', 'Choose a page on this website'),
+                    $this->prefixedFieldName(self::LINKTYPE_SITETREE),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
+                        'Choose a page on this website or type to start searching'
+                    ),
                     SiteTree::class
-                )
-            ),
+                )->setValue( $record->SiteTreeID ?: null )
+            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_SITETREE)->end(),
 
-            Tab::create(
-                _t(__CLASS__ . ".File", "File"),
+            Wrapper::create(
                 InlineLink_FileField::create(
-                    $this->prefixedFieldName('File'),
-                    _t(__CLASS__ . '.CHOOSE_A_FILE', 'Choose a file on this website'),
+                    $this->prefixedFieldName(self::LINKTYPE_FILE),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_A_FILE",
+                        'Upload to or choose a file on this website'
+                    ),
+                    $file_list
                 )
-            ),
+            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_FILE)->end()
+        );
 
-
-            Tab::create(
-                _t(__CLASS__ . ".Phone", "Phone"),
-                InlineLink_PhoneField::create(
-                    $this->prefixedFieldName('Phone'),
-                    _t( __CLASS__ . '.ENTER_A_PHONE_NUMBER', 'Enter a telephone number')
-                )->setDescription(
-                    _t( __CLASS__ . '.PHONE_NOTE', 'Supply the country dialling code to remove ambiguity')
-                )->addExtraClass('text')
-            )
-
-        ];
+        $this->extend('updateLinkFields', $fields);
 
         return $fields;
     }

@@ -13,7 +13,8 @@
     <% end_if %>
 
     <div class="uploadfield-item__details fill-height flexbox-area-grow">
-        '{$Title}' ({$LinkURL} - {$Type})
+        {$Title} - {$LinkURL}
+        - {$TypeLabel}
     </div>
 
  </div>

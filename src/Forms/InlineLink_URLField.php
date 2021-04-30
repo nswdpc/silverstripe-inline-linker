@@ -3,6 +3,9 @@
 namespace NSWDPC\InlineLinker;
 use BurnBright\ExternalURLField\ExternalURLField;
 
+/**
+ * Allow a user to provide a URL for association with the link
+ */
 class InlineLink_URLField extends ExternalURLField {
 
     use InlineLink;

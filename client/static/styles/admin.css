@@ -1,21 +1,23 @@
-.cms-edit-form .elementalarea .inlinelinkcomposite {
+.cms-edit-form .elementalarea .inlinelink {
   -webkit-box-flex: 1;
   -webkit-flex: 1 0 100%;
   max-width : 860px;
   flex: 1 0 100%;
-  border:1px solid #ced5e1;
-  background-color:#f3f3f3;
-  padding:1rem;
-  border-radius : 4px;
+  border: none;
+  border-radius: 2px;/* with browser support outline will follow this */
+  outline: 1px solid #dbe0ea;
+  padding: 1rem;
+  margin-top: 2rem;
 }
 
-.cms-edit-form .elementalarea .inlinelinkcomposite .uploadfield-item {
+.cms-edit-form .elementalarea .inlinelink legend {
+    background: transparent;
+    font-size: 1em;
+    margin: 0;
+    padding: 1em 0 0 0;
+}
+
+.cms-edit-form .inlinelink .uploadfield-item {
   margin-bottom : 1rem;
-}
-
-.cms-edit-form .inlinelinkcomposite .form__field-holder .inlinelink-wrapper {
-  border:1px solid #ced5e1;
-  background-color:#f3f3f3;
-  padding:1rem;
-  border-radius : 4px;
+  border: 1px solid #ced5e1;
 }
