@@ -373,10 +373,8 @@ class InlineLinkField extends CompositeField
         $type = $type_field->dataValue();
         // @var string eg Email
         if(!$type) {
-            throw new ValidationException(_t(
-                "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_ERROR",
-                "Please select the link type"
-            ));
+            // if there is no type value provided, no link can be created
+            return;
         }
 
         // grab the value field based on the Type selected
@@ -409,24 +407,17 @@ class InlineLinkField extends CompositeField
         if($type) {
             // apply the value found
             $link = $this->createOrAssociateLink($type, $value_field);
-        } else {
-            // might be updating or creating a link with no value
-            $link = $this->getRecord();
-            if(!$link || !$link->exists()) {
-                // create a new link record, without any data
-                $link = Link::create();
-            }
+
+            // save Title and OpenInNewWindow
+            $link->Title = $title;
+            $link->OpenInNewWindow = $open_in_new_window;
+            $link->write();
+
+            // the link becomes the record
+            $this->setRecord($link);
+            // save the link id to the parent element that has the relation to the link
+            $this->parent->setField($this->getName() . "ID", $link->ID);
         }
-
-        // save Title and OpenInNewWindow
-        $link->Title = $title;
-        $link->OpenInNewWindow = $open_in_new_window;
-        $link->write();
-
-        // the link becomes the record
-        $this->setRecord($link);
-        // save the link id to the parent element that has the relation to the link
-        $this->parent->setField($this->getName() . "ID", $link->ID);
 
     }
 
@@ -677,7 +668,7 @@ class InlineLinkField extends CompositeField
     public function getLinkFields() : CompositeField {
 
         $record = $this->getRecord();
-        $type = self::LINKTYPE_URL;
+        $type = '';
         $file_list = null;
         $value = '';
         if($record && $record->exists()) {
@@ -715,8 +706,8 @@ class InlineLinkField extends CompositeField
                     self::LINKTYPE_FILE => _t("NSWDPC\\InlineLinker\\InlineLinkField.FILE_TYPE", 'A file on this website')
                 ],
                 $type
-            )->setValue($type),
-            //->setAttribute('onchange', 'function() { console.log(\'changed\'); }'),
+            )->setValue($type)
+            ->setEmptyString(''),// default to no link
 
             Wrapper::create(
                 InlineLink_TypeDefinedTextField::create(
