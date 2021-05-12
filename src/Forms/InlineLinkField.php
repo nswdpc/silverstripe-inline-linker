@@ -20,7 +20,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\SecurityToken;
-use UncleCheese\DisplayLogic\Forms\Wrapper;
+use SilverStripe\View\Requirements;
 
 /**
  * Subclass for specific composite field handling, currently not in use
@@ -718,57 +718,82 @@ class InlineLinkField extends CompositeField
             )->setValue($type),
             //->setAttribute('onchange', 'function() { console.log(\'changed\'); }'),
 
-            Wrapper::create(
-                InlineLink_TypeDefinedTextField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
+
+            InlineLink_TypeDefinedTextField::create(
+                $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
+                    'Enter a website URL, email address or phone number'
+                ),
+                $value
+            )->setDescription(
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_NOTE",
+                    'The value will be validated based on the link type you select'
+                )
+            )->setTip(
+                new Tip(
                     _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
-                        'Enter a website URL, email address or phone number'
-                    ),
-                    $value
-                )->setDescription(
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_NOTE",
-                        'The value will be validated based on the link type you select'
-                    )
-                )->setTip(
-                    new Tip(
-                        _t(
-                            "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_RIGHTNOTE",
-                            'Website links should begin with https:// or http://'
-                        )
+                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_RIGHTNOTE",
+                        'Website links should begin with https:// or http://'
                     )
                 )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))
-                ->isEqualTo(self::LINKTYPE_URL)
-                ->orIf()->isEqualTo(self::LINKTYPE_EMAIL)
-                ->orIf()->isEqualTo(self::LINKTYPE_PHONE)
-                ->end(),
+            )->setAttribute(
+                'data-signals',
+                json_encode([
+                    [
+                        'containerSelector' => '.form-group',
+                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'value' => [ self::LINKTYPE_URL, self::LINKTYPE_EMAIL, self::LINKTYPE_PHONE  ]
+                    ]
+                ])
+            ),
 
-            Wrapper::create(
-                InlineLink_SiteTreeField::create(
+            InlineLink_SiteTreeField::create(
                     $this->prefixedFieldName(self::LINKTYPE_SITETREE),
                     _t(
                         "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
                         'Choose a page on this website or type to start searching'
                     ),
                     SiteTree::class
-                )->setValue( $record->SiteTreeID ?: null )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_SITETREE)->end(),
+            )->setValue(
+                $record->SiteTreeID ?: null
+            )->setAttribute(
+                'data-signals',
+                json_encode([
+                    [
+                        'containerSelector' => '.form-group',
+                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'value' => [ self::LINKTYPE_SITETREE  ]
+                    ]
+                ])
+            ),
 
-            Wrapper::create(
-                InlineLink_FileField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_FILE),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_A_FILE",
-                        'Upload to or choose a file on this website'
-                    ),
-                    $file_list
-                )
-            )->displayIf($this->prefixedFieldName(self::FIELD_NAME_TYPE))->isEqualTo(self::LINKTYPE_FILE)->end()
+            InlineLink_FileField::create(
+                $this->prefixedFieldName(self::LINKTYPE_FILE),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_A_FILE",
+                    'Upload to or choose a file on this website'
+                ),
+                $file_list
+            )->setAttribute(
+                'data-signals',
+                json_encode([
+                    [
+                        'containerSelector' => '.form-group',
+                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'value' => [ self::LINKTYPE_FILE  ]
+                    ]
+                ])
+            )
+
         );
 
         $this->extend('updateLinkFields', $fields);
+
+        Requirements::javascript(
+            'nswdpc/silverstripe-inline-linker:/client/dist/js/app.js'
+        );
 
         return $fields;
     }
