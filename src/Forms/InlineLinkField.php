@@ -95,14 +95,9 @@ class InlineLinkField extends CompositeField
         // set name and title early
         $this->name = $name;
         $this->title = $title;
-        $value = null;
-
-        // store record and parent
+        // initialise record and parent
         $this->parent = $this->record = null;
-        if($component = $parent->getComponent($name)) {
-            $this->parent = $parent;
-            $value = $component->Type;
-        }
+        $component = $parent->getComponent($name);
         if(!($component instanceof Link)) {
             throw new \InvalidArgumentException(_t(
                 "NSWDPC\\InlineLinker\\InlineLinkField.INVALID_COMPONENT",
@@ -113,6 +108,8 @@ class InlineLinkField extends CompositeField
             ));
         }
 
+        // set a valid parent
+        $this->parent = $parent;
         $this->setRecord($component);
 
         // determine if in the context of an inline editable Elemental element
@@ -490,6 +487,7 @@ class InlineLinkField extends CompositeField
 
         // apply data over defaults
         $data = array_merge($base, $data);
+
         $link = $this->getRecord();
         if($link instanceof Link) {
             // update the existing link
@@ -673,8 +671,10 @@ class InlineLinkField extends CompositeField
         $value = '';
         if($record && $record->exists()) {
             $type = $record->Type;
+            // file storage
             $file_list = ArrayList::create();
             $file_list->push( $record->File() );
+            // Retrieve the link value, based on the record type
             switch($record->Type) {
                 case self::LINKTYPE_URL:
                     $value = $record->URL;
@@ -687,6 +687,7 @@ class InlineLinkField extends CompositeField
                     break;
                 default:
                     $value = '';
+                    break;
             }
         }
 
@@ -696,7 +697,7 @@ class InlineLinkField extends CompositeField
                 $this->prefixedFieldName(self::FIELD_NAME_TYPE),
                 _t(
                     "NSWDPC\\InlineLinker\\InlineLinkField.THE_LINK_TYPE",
-                    "The link type"
+                    "Choose a link type"
                 ),
                 [
                     self::LINKTYPE_SITETREE => _t("NSWDPC\\InlineLinker\\InlineLinkField.PAGE_TYPE", 'A page on this website'),
@@ -706,28 +707,32 @@ class InlineLinkField extends CompositeField
                     self::LINKTYPE_FILE => _t("NSWDPC\\InlineLinker\\InlineLinkField.FILE_TYPE", 'A file on this website')
                 ],
                 $type
+            )->setDescription(
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.THE_LINK_TYPE_DESCRIPTION",
+                    "Leave empty for no link"
+                ),
             )->setValue($type)
             ->setEmptyString(''),// default to no link
 
-
-            InlineLink_TypeDefinedTextField::create(
-                $this->prefixedFieldName(self::LINKTYPE_TYPEDEFINED),
+            InlineLink_URLField::create(
+                $this->prefixedFieldName(self::LINKTYPE_URL),
                 _t(
-                    "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK",
-                    'Enter a website URL, email address or phone number'
+                    "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_WEBSITE_URL",
+                    'Enter a website URL'
                 ),
-                $value
-            )->setDescription(
-                _t(
-                    "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_NOTE",
-                    'The value will be validated based on the link type you select'
-                )
+                $record->URL ?: ''
             )->setTip(
                 new Tip(
                     _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.GENERIC_TEXT_LINK_RIGHTNOTE",
+                        "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_WEBSITE_URL_RIGHTNOTE",
                         'Website links should begin with https:// or http://'
                     )
+                )
+            )->setDescription(
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_WEBSITE_URL_DESCRIPTION",
+                    'Website links should begin with https:// or http://'
                 )
             )->setAttribute(
                 'data-signals',
@@ -735,18 +740,66 @@ class InlineLinkField extends CompositeField
                     [
                         'containerSelector' => '.form-group',
                         'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
-                        'value' => [ self::LINKTYPE_URL, self::LINKTYPE_EMAIL, self::LINKTYPE_PHONE  ]
+                        'value' => [ self::LINKTYPE_URL ]
+                    ]
+                ])
+            ),
+
+            InlineLink_EmailField::create(
+                $this->prefixedFieldName(self::LINKTYPE_EMAIL),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_AN_EMAIL_ADDRESS",
+                    'Enter an e-mail address'
+                ),
+                $record->Email ?: ''
+            )->setAttribute(
+                'data-signals',
+                json_encode([
+                    [
+                        'containerSelector' => '.form-group',
+                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'value' => [ self::LINKTYPE_EMAIL ]
+                    ]
+                ])
+            ),
+
+            InlineLink_PhoneField::create(
+                $this->prefixedFieldName(self::LINKTYPE_PHONE),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_AN_PHONE_NUMBER",
+                    'Enter a phone number'
+                ),
+                $record->Phone ?: ''
+            )->setTip(
+                new Tip(
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_AN_PHONE_NUMBER_RIGHTNOTE",
+                        'Phone numbers should start with the country dialling code'
+                    )
+                )
+            )->setDescription(
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_AN_PHONE_NUMBER_DESCRIPTION",
+                    'Phone numbers should start with the country dialling code, example +61 499 999 999'
+                )
+            )->setAttribute(
+                'data-signals',
+                json_encode([
+                    [
+                        'containerSelector' => '.form-group',
+                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'value' => [ self::LINKTYPE_PHONE ]
                     ]
                 ])
             ),
 
             InlineLink_SiteTreeField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_SITETREE),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
-                        'Choose a page on this website or type to start searching'
-                    ),
-                    SiteTree::class
+                $this->prefixedFieldName(self::LINKTYPE_SITETREE),
+                _t(
+                    "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
+                    'Choose a page on this website or type to start searching'
+                ),
+                SiteTree::class
             )->setValue(
                 $record->SiteTreeID ?: null
             )->setAttribute(
