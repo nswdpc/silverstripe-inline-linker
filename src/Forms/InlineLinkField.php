@@ -4,6 +4,7 @@ namespace NSWDPC\InlineLinker;
 
 use DNADesign\Elemental\Models\BaseElement;
 use DNADesign\Elemental\Controllers\ElementalAreaController;
+use DNADesign\Elemental\Forms\EditFormFactory;
 use gorriecoe\Link\Models\Link;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
@@ -20,7 +21,6 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\SecurityToken;
-use SilverStripe\View\Requirements;
 
 /**
  * Subclass for specific composite field handling, currently not in use
@@ -38,6 +38,16 @@ class InlineLinkField extends CompositeField
      * @var SilverStripe\ORM\DataObject|null
      */
     protected $parent;
+
+    /**
+     * Whether the parent is an inline editable Elemental element
+     * null = not detected yet
+     * true = yes, it is
+     * false = no
+     * If true, handle field namespacing, prefixing and replacement of [] in fieldnames etc.
+     * @var boolean|null
+     */
+    protected $parent_inline_editable = null;
 
     /**
      * @var TextField
@@ -529,13 +539,20 @@ class InlineLinkField extends CompositeField
      * @return boolean
      */
     public function hasInlineElementalParent() {
-        // If there is no silverstripe-elemental module installed, then no need to check...
-        if(!class_exists("\\DNADesign\\Elemental\\Models\\BaseElement")) {
-            return false;
+        if(!is_null($this->parent_inline_editable)) {
+            // already detected
+            return $this->parent_inline_editable;
+        } else if(!class_exists("\\DNADesign\\Elemental\\Models\\BaseElement")) {
+            // If there is no silverstripe-elemental module installed, then no need to check...
+            $this->parent_inline_editable = false;
+            return $this->parent_inline_editable;
+        } else {
+            $this->parent_inline_editable = $this->parent
+                    && ($this->parent instanceof BaseElement)
+                    && $this->parent->config()->get('inline_editable');
+
+            return $this->parent_inline_editable;
         }
-        return $this->parent
-                && ($this->parent instanceof BaseElement)
-                && $this->parent->config()->get('inline_editable');
     }
 
     /**
@@ -734,16 +751,13 @@ class InlineLinkField extends CompositeField
                     "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_WEBSITE_URL_DESCRIPTION",
                     'Website links should begin with https:// or http://'
                 )
-            )->setAttribute(
-                'data-signals',
-                json_encode([
-                    [
-                        'containerSelector' => '.form-group',
-                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
-                        'value' => [ self::LINKTYPE_URL ]
-                    ]
-                ])
-            ),
+            )->setSignals([
+                [
+                    'containerSelector' => '.form-group',
+                    'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
+                    'value' => [ self::LINKTYPE_URL ]
+                ]
+            ]),
 
             InlineLink_EmailField::create(
                 $this->prefixedFieldName(self::LINKTYPE_EMAIL),
@@ -752,16 +766,13 @@ class InlineLinkField extends CompositeField
                     'Enter an e-mail address'
                 ),
                 $record->Email ?: ''
-            )->setAttribute(
-                'data-signals',
-                json_encode([
-                    [
-                        'containerSelector' => '.form-group',
-                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
-                        'value' => [ self::LINKTYPE_EMAIL ]
-                    ]
-                ])
-            ),
+            )->setSignals([
+                [
+                    'containerSelector' => '.form-group',
+                    'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
+                    'value' => [ self::LINKTYPE_EMAIL ]
+                ]
+            ]),
 
             InlineLink_PhoneField::create(
                 $this->prefixedFieldName(self::LINKTYPE_PHONE),
@@ -782,50 +793,52 @@ class InlineLinkField extends CompositeField
                     "NSWDPC\\InlineLinker\\InlineLinkField.ENTER_AN_PHONE_NUMBER_DESCRIPTION",
                     'Phone numbers should start with the country dialling code, example +61 499 999 999'
                 )
-            )->setAttribute(
-                'data-signals',
-                json_encode([
-                    [
-                        'containerSelector' => '.form-group',
-                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
-                        'value' => [ self::LINKTYPE_PHONE ]
-                    ]
-                ])
-            ),
+            )->setSignals([
+                [
+                    'containerSelector' => '.form-group',
+                    'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
+                    'value' => [ self::LINKTYPE_PHONE ]
+                ]
+            ]),
 
-            InlineLink_SiteTreeField::create(
-                $this->prefixedFieldName(self::LINKTYPE_SITETREE),
-                _t(
-                    "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
-                    'Choose a page on this website or type to start searching'
+            CompositeField::create(
+                InlineLink_SiteTreeField::create(
+                    $this->prefixedFieldName(self::LINKTYPE_SITETREE),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
+                        'Choose a page on this website or type to start searching'
+                    ),
+                    SiteTree::class
+                )->setValue(
+                    $record->SiteTreeID ?: null
                 ),
-                SiteTree::class
-            )->setValue(
-                $record->SiteTreeID ?: null
-            )->setAttribute(
-                'data-signals',
-                json_encode([
+                // ensure we have a signal field
+                SignallerField::create(
+                    "signaller_for_" . $this->prefixedFieldName(self::LINKTYPE_SITETREE)
+                )->setSignals([
                     [
-                        'containerSelector' => '.form-group',
-                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'containerSelector' => '.composite.form-group--no-label',
+                        'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
                         'value' => [ self::LINKTYPE_SITETREE  ]
                     ]
                 ])
             ),
 
-            InlineLink_FileField::create(
-                $this->prefixedFieldName(self::LINKTYPE_FILE),
-                _t(
-                    "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_A_FILE",
-                    'Upload to or choose a file on this website'
+            CompositeField::create(
+                InlineLink_FileField::create(
+                    $this->prefixedFieldName(self::LINKTYPE_FILE),
+                    _t(
+                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_A_FILE",
+                        'Upload to or choose a file on this website'
+                    ),
+                    $file_list
                 ),
-                $file_list
-            )->setAttribute(
-                'data-signals',
-                json_encode([
+                SignallerField::create(
+                    "signaller_for_" . $this->prefixedFieldName(self::LINKTYPE_FILE)
+                )->setSignals([
                     [
-                        'containerSelector' => '.form-group',
-                        'triggerElement' => $this->prefixedFieldName(self::FIELD_NAME_TYPE),
+                        'containerSelector' => '.composite.form-group--no-label',
+                        'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
                         'value' => [ self::LINKTYPE_FILE  ]
                     ]
                 ])
@@ -835,11 +848,19 @@ class InlineLinkField extends CompositeField
 
         $this->extend('updateLinkFields', $fields);
 
-        Requirements::javascript(
-            'nswdpc/silverstripe-inline-linker:/client/dist/js/app.js'
-        );
-
         return $fields;
+    }
+
+    /**
+     * Return the element name that will trigger the signals on change
+     * The trigger element name must be namespaced
+     */
+    protected function getTriggerElement($name) : string {
+        if($inline = $this->hasInlineElementalParent()) {
+            return sprintf(EditFormFactory::FIELD_NAMESPACE_TEMPLATE, $this->parent->ID, $this->prefixedFieldName($name));
+        } else {
+            return $this->prefixedFieldName($name);
+        }
     }
 
 }

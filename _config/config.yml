@@ -5,6 +5,13 @@ gorriecoe\Link\Models\Link:
   extensions:
     - 'NSWDPC\InlineLinker\LinkExtension'
 
+---
+Name: nswdpc-inline-linker-leftandmain
+After:
+  - '#elemental'
+---
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
     - vendor/nswdpc/silverstripe-inline-linker/client/static/styles/admin.css
+  extra_requirements_javascript:
+    - vendor/nswdpc/silverstripe-inline-linker/client/dist/js/app.js

@@ -21,3 +21,10 @@
   margin-bottom : 1rem;
   border: 1px solid #ced5e1;
 }
+
+/**
+ * JS adds this class to hide fields based on fireSignal
+ */
+.inlinelinkcomposite .signal-hidden {
+  display : none !important;
+}

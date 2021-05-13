@@ -15,18 +15,20 @@ const fireSignal = function(triggerElement, srcElement, signal) {
   if (signal.containerSelector) {
     // apply the container as the closest element
     containerElement = srcElement.closest(signal.containerSelector);
+    if(!containerElement) {
+      throw 'No containerElement for selector ' + signal.containerSelector;
+    }
   }
-
   // value hit (based on OR)
   const hit = signal.value.includes(
     triggerElement.value
   );
 
   if(hit) {
-    containerElement.classList.remove('hidden');
+    containerElement.classList.remove('signal-hidden');
   } else {
     // remove if set, add if not
-    containerElement.classList.add('hidden');
+    containerElement.classList.add('signal-hidden');
   }
   return;
 };
@@ -254,10 +256,19 @@ window.document.addEventListener(
 // integrate with entwine, if available
 if (typeof window.jQuery != 'undefined' && window.jQuery.fn.entwine) {
   window.jQuery.entwine('ss', ($) => {
+
     $('.cms-edit-form').entwine({
       onmatch() {
         initElements();
       }
     });
+
+    $('.inlinelinkcomposite').entwine({
+      onmatch() {
+        initElements();
+      }
+    });
+
   });
+
 }

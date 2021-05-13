@@ -94,16 +94,20 @@
     if (signal.containerSelector) {
       // apply the container as the closest element
       containerElement = srcElement.closest(signal.containerSelector);
+
+      if (!containerElement) {
+        throw 'No containerElement for selector ' + signal.containerSelector;
+      }
     } // value hit (based on OR)
 
 
     var hit = signal.value.includes(triggerElement.value);
 
     if (hit) {
-      containerElement.classList.remove('hidden');
+      containerElement.classList.remove('signal-hidden');
     } else {
       // remove if set, add if not
-      containerElement.classList.add('hidden');
+      containerElement.classList.add('signal-hidden');
     }
 
     return;
@@ -373,6 +377,11 @@
   if (typeof window.jQuery != 'undefined' && window.jQuery.fn.entwine) {
     window.jQuery.entwine('ss', function ($) {
       $('.cms-edit-form').entwine({
+        onmatch: function onmatch() {
+          initElements();
+        }
+      });
+      $('.inlinelinkcomposite').entwine({
         onmatch: function onmatch() {
           initElements();
         }
