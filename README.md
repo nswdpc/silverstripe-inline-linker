@@ -1,83 +1,56 @@
 # Inline linking field for Silverstripe
 
-This module provides a basic **inline** linking field, saving into the Link model provided by [gorriecoe/silverstripe-link](https://github.com/gorriecoe/silverstripe-link)
+This module provides:
 
-This module is under development and should not be used on production websites.
++ a basic **inline** linking field,
++ saving into the existing Link model provided by [gorriecoe/silverstripe-link](https://github.com/gorriecoe/silverstripe-link)
++ delete link handling
 
-Pull requests are welcome.
+This module is under active development, pull requests are welcome.
 
 ## Background
 
-Rather than taking the content editor to a new data entry screen, the link can be added and saved to the current record in one of the provided fields:
+Rather than taking our content editors to a new data entry screen for the purposes of adding a link to a record, the field allows a link to be added to the current record within the context of that record.
 
-- Enter an external URL
-- Email address
-- Select a page
-- Select a file asset
-- Phone
+The link can be added using one of the provided fields:
+
++ Enter an external URL
++ Enter an e-mail address
++ Select a page
++ Select a file asset
++ Enter a phone number
+
+### Upload field example
+
+<img src="./docs/img/file.png" alt="Image of the field showing a link being set to a file upload">
 
 The object of this module is to:
 
-- allow editing and creation of links within the context of the parent record
-- have no Javascript dependencies, beyond those provided by core framework fields
-- act as a drop-in replacement for the LinkField provided by [gorriecoe/silverstripe-linkfield](https://github.com/gorriecoe/silverstripe-linkfield) (for has-one relations only)
-- publish Link `File` and `Sitetree` relations when the parent record is published, via the Silverstripe ownership API
-
-The field currently looks like this when used in an [inline editable Element](https://github.com/silverstripe/silverstripe-elemental)
-
-<img src="./docs/img/pre-release.png">
++ allow editing and creation of links within the context of the parent record
++ ~~have no Javascript dependencies, beyond those provided by core framework fields~~ (we tried)
++ act as a drop-in replacement for the LinkField provided by [gorriecoe/silverstripe-linkfield](https://github.com/gorriecoe/silverstripe-linkfield) (NB: **for has-one relations only**)
++ **automatically publish** linked `File` and/or `SiteTree` relations when the parent record is published, via the Silverstripe ownership API
 
 
 ### Elemental inline editing
 
-We use [Display Logic](https://github.com/unclecheese/silverstripe-display-logic) to display the relevant link field.
+This module supports inline editing in Elemental. The field will detect whether it has been loaded in an inline editable context and makes allowances for this.
 
-As this does not work with [inline Elemental elements](https://github.com/silverstripe/silverstripe-elemental#in-line-editing), all the relevant link value fields are displayed. You can workaround this by declaring your element `private static $inline_editable = false;`.
+Rather than create a React component for the field, we use the standard [MutationObserver API](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) to detect field changes in the administration area based on an HTML5 data attribute attached to the relevant fields.
+
+A source file is provided in [client/src/js/app.js](.client/src/js/app.js) for reference.
+
+A future goal is to decouple the administration (entwine) event detection/handling and allow the field to be used outside the administration area.
+
+
+
+## TODO
+
++ Fragment field for page linking
 
 ## Usage
 
-Use the `InlineLinkField` to load the fields:
-
-```php
-<?php
-namespace Some\Thing;
-
-use gorriecoe\Link\Models\Link;
-use NSWDPC\InlineLinker\InlineLinkField;
-use SilverStripe\ORM\DataObject;
-
-//....
-
-class MyThing extends DataObject {
-
-    private static $has_one = [
-        'MyLink' => Link::class
-    ];
-
-    public function getCmsFields()
-    {
-        $fields = parent::getCmsFields();
-        $fields->removeByName('MyLinkID');// remove dropdownfield
-        $fields->addFieldsToTab(
-            'Root.Main', [
-                //-- some fields
-                $this->getLinkField()
-                //-- some other fields
-            ]
-        );
-        return $fields;
-    }
-
-    public function getLinkField() {
-        return InlineLinkField::create(
-                'MyLink',
-                _t(__CLASS__ . '.LINK', 'My link title'),
-                $this
-        );
-    }
-
-}
-```
+* [Example](./docs/en/001_index.md#Example+usage)
 
 ## Requirements
 
@@ -85,13 +58,11 @@ See [composer.json](./composer.json)
 
 ## Installation
 
-The recommended way of installing this module is via [composer](https://getcomposer.org/download/)
+The only supported way of installing this module is via [composer](https://getcomposer.org/download/)
 
 ```shell
 composer require nswdpc/silverstripe-inline-linker
 ```
-
-> Remember to add a repository entry in composer.json to load this module, currently.
 
 ## License
 
@@ -99,7 +70,7 @@ composer require nswdpc/silverstripe-inline-linker
 
 ## Documentation
 
-* [Documentation](./docs/en/001_index.md)
+* [Further documentation](./docs/en/001_index.md)
 
 ## Configuration
 
