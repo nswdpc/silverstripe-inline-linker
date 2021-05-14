@@ -1,4 +1,4 @@
-.cms-edit-form .elementalarea .inlinelink {
+.cms-edit-form .elementalarea .inlinelinkcomposite {
   -webkit-box-flex: 1;
   -webkit-flex: 1 0 100%;
   max-width : 860px;
@@ -10,14 +10,14 @@
   margin-top: 2rem;
 }
 
-.cms-edit-form .elementalarea .inlinelink legend {
+.cms-edit-form .elementalarea .inlinelinkcomposite legend {
     background: transparent;
     font-size: 1em;
     margin: 0;
     padding: 1em 0 0 0;
 }
 
-.cms-edit-form .inlinelink .uploadfield-item {
+.cms-edit-form .inlinelinkcomposite .uploadfield-item {
   margin-bottom : 1rem;
   border: 1px solid #ced5e1;
 }
