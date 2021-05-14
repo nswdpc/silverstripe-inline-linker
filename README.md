@@ -38,7 +38,7 @@ This module supports inline editing in Elemental. The field will detect whether 
 
 Rather than create a React component for the field, we use the standard [MutationObserver API](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) to detect field changes in the administration area based on an HTML5 data attribute attached to the relevant fields.
 
-A source file is provided in [client/src/js/app.js](.client/src/js/app.js) for reference.
+A source file is provided in [client/src/js/app.js](./client/src/js/app.js) for reference.
 
 A future goal is to decouple the administration (entwine) event detection/handling and allow the field to be used outside the administration area.
 
