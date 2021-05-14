@@ -165,9 +165,8 @@ class InlineLinkField extends CompositeField
             $this->prefixedFieldName( self::FIELD_NAME_OPEN_IN_NEW_WINDOW),
             _t(
                 "NSWDPC\\InlineLinker\\InlineLinkField.LINK_OPEN_IN_NEW_WINDOW",
-                'Open in new window'
+                'Open in new tab / window'
             ),
-            [],
             $this->getRecordOpenInNewWindow()
         );
 
@@ -256,6 +255,9 @@ class InlineLinkField extends CompositeField
         foreach($fields as $field) {
             $field->setSubmittedValue( null );
         }
+
+        // Ensure the checkbox value defaults to 0
+        $this->getOpenInNewWindowField()->setSubmittedValue(0);
 
         // set submitted values
         foreach($values as $index => $value) {
@@ -621,14 +623,15 @@ class InlineLinkField extends CompositeField
 
     /**
      * Return the OpenInNewWindow value of the current record
-     * @return string
+     * @return int
      */
     public function getRecordOpenInNewWindow() {
         $record = $this->getRecord();
-        if(isset($record->OpenInNewWindow)) {
-            return $record->OpenInNewWindow == 1 ? 1: 0;
+        $value = 0;
+        if($record && $record->isInDB()) {
+            $value = ($record->OpenInNewWindow == 1 ? 1: 0);
         }
-        return 0;
+        return $value;
     }
 
     /**
