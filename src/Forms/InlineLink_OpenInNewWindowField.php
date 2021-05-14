@@ -2,25 +2,22 @@
 
 namespace NSWDPC\InlineLinker;
 
-use SilverStripe\Forms\OptionsetField;
+use SilverStripe\Forms\CheckboxField;
 use SilverStripe\ORM\DataObjectInterface;
 
 /**
- * A radio button set to allow selection, saving and display of the 'Open in new window' settings
+ * A checkbox to handle the saving and display of the 'Open in new window' setting
+ * Note: OptionsetField saving issue : https://github.com/silverstripe/silverstripe-admin/issues/787
  */
-class InlineLink_OpenInNewWindowField extends OptionsetField {
+class InlineLink_OpenInNewWindowField extends CheckboxField {
 
     use InlineLink;
 
     /**
      * @inheritdoc
      */
-    public function __construct($name, $title = null, $source = [], $value = null) {
-        $source = [
-            0 => _t("NSWDPC\\InlineLinker\\InlineLink.NO", 'No'),
-            1 => _t("NSWDPC\\InlineLinker\\InlineLink.YES", 'Yes'),
-        ];
-        parent::__construct($name, $title, $source, $value);
+    public function __construct($name, $title = null, $value = null) {
+        parent::__construct($name, $title, $value);
     }
 
     /**
