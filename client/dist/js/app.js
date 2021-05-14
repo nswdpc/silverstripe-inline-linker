@@ -293,8 +293,7 @@
                   if (mutation.target.nodeName == 'SELECT') {
                     // mutation.target is the triggerElement
                     fireSignals(mutation.target);
-                  } else {
-                    console.warn('Ignoring changed class on: ' + mutation.target.nodeName);
+                  } else {// console.warn('Ignoring changed class on: ' + mutation.target.nodeName);
                   }
                 }
               } else {

@@ -193,7 +193,7 @@ const addDocumentObserver = function() {
                   // mutation.target is the triggerElement
                   fireSignals(mutation.target);
                 } else {
-                  console.warn('Ignoring changed class on: ' + mutation.target.nodeName);
+                  // console.warn('Ignoring changed class on: ' + mutation.target.nodeName);
                 }
               }
             } else {
