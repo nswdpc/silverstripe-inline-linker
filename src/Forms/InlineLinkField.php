@@ -866,4 +866,20 @@ class InlineLinkField extends CompositeField
         }
     }
 
+    /**
+     * Returns a readonly version of this field
+     * @return InlineLinkField_Readonly
+     */
+    public function performReadonlyTransformation()
+    {
+        $title = trim( $this->title ? $this->title : $this->getLegend() );
+        if(!$title) {
+            $title = null;
+        }
+        $field = new InlineLinkField_Readonly($this->name, $title);
+        $field->setRecord( $this->getRecord() );
+        $field->setForm($this->form);
+        return $field;
+    }
+
 }
