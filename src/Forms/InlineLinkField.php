@@ -616,7 +616,7 @@ class InlineLinkField extends CompositeField
      */
     public function getRecordTitle() {
         $record = $this->getRecord();
-        $title = trim(isset($record->Title) ? $record->Title : '');
+        $title = trim($record->Title ?? '');
         return $title;
     }
 
