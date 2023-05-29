@@ -20,6 +20,11 @@ class InlineLink_TypeDefinedTextField extends TextField {
      */
     protected $inputType = 'text';
 
+    /**
+     * @var string
+     */
+    protected $link_type = '';
+
     public function Type()
     {
         return 'text';

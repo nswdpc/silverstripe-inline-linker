@@ -1,6 +1,8 @@
 <?php
 
 namespace NSWDPC\InlineLinker;
+
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Forms\TreeDropdownField;
 
 class InlineLink_SiteTreeField extends TreeDropdownField {

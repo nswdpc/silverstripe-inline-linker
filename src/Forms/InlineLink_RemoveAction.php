@@ -12,4 +12,9 @@ class InlineLink_RemoveAction extends CheckboxField {
 
     use InlineLink;
 
+    /**
+     * @var string
+     */
+    protected $link_type = '';
+
 }

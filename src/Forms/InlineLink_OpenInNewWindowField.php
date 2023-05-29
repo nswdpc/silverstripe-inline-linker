@@ -14,6 +14,11 @@ class InlineLink_OpenInNewWindowField extends CheckboxField {
     use InlineLink;
 
     /**
+     * @var string
+     */
+    protected $link_type = '';
+
+    /**
      * @inheritdoc
      */
     public function __construct($name, $title = null, $value = null) {

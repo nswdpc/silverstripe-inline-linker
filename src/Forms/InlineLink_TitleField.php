@@ -7,6 +7,8 @@ use SilverStripe\ORM\DataObjectInterface;
 
 class InlineLink_TitleField extends TextField {
 
+    use InlineLink;
+
     /**
      * This is INPUT's type attribute value.
      *
@@ -14,7 +16,10 @@ class InlineLink_TitleField extends TextField {
      */
     protected $inputType = 'text';
 
-    use InlineLink;
+    /**
+     * @var string
+     */
+    protected $link_type = '';
 
     public function Type()
     {
