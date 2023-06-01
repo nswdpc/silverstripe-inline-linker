@@ -874,10 +874,7 @@ class InlineLinkField extends CompositeField
      */
     public function performReadonlyTransformation()
     {
-        $title = trim( $this->title ? $this->title : $this->getLegend() );
-        if(!$title) {
-            $title = null;
-        }
+        $title = $this->title ? $this->title : $this->getLegend();
         $field = new InlineLinkField_Readonly($this->name, $title);
         $field->setRecord( $this->getRecord() );
         $field->setForm($this->form);
