@@ -16,6 +16,7 @@ use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\Tip;
+use SilverStripe\Forms\SelectionGroup;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
@@ -30,12 +31,12 @@ class InlineLinkField extends CompositeField
 {
 
     /**
-     * @var gorriecoe\Link\Models\Link|null
+     * @var \gorriecoe\Link\Models\Link|null
      */
     protected $record;
 
     /**
-     * @var SilverStripe\ORM\DataObject|null
+     * @var \SilverStripe\ORM\DataObject|null
      */
     protected $parent;
 
@@ -272,10 +273,12 @@ class InlineLinkField extends CompositeField
                 $field->setSubmittedValue( $value );
             }
         }
+
+        return  $this;
     }
 
     /**
-     * @param InlineLink_TitleField
+     * @param InlineLink_TitleField $field
      */
     public function setTitleField(InlineLink_TitleField $field) {
         $this->title_field = $field;
@@ -290,7 +293,7 @@ class InlineLinkField extends CompositeField
     }
 
     /**
-     * @param InlineLink_OpenInNewWindowField
+     * @param InlineLink_OpenInNewWindowField $field
      */
     public function setOpenInNewWindowField(InlineLink_OpenInNewWindowField $field) {
         $this->open_in_new_window_field = $field;
@@ -305,7 +308,7 @@ class InlineLinkField extends CompositeField
     }
 
     /**
-     * @param InlineLink_RemoveAction
+     * @param InlineLink_RemoveAction $field
      */
     public function setRemoveField(InlineLink_RemoveAction $field) {
         $this->remove_field = $field;
@@ -433,7 +436,6 @@ class InlineLinkField extends CompositeField
     /**
      * Create or save a link using the value from the form field
      * @param string $type eg. 'Email'
-     * @param mixed $value eg. 'bob@example.com'
      * @param FormField $field the Form field holding the data related to the type
      * @return Link
      */
@@ -585,7 +587,7 @@ class InlineLinkField extends CompositeField
      * @return string
      */
     protected function getIndexFromName($complete_field_name) {
-        $type = "";
+        $index = "";
         if($this->hasInlineElementalParent()) {
             // the field name should start with the prefix...
             if(strpos($complete_field_name, $this->getName() . self::FIELD_NAME_TYPE_SEPARATOR) !== 0) {
