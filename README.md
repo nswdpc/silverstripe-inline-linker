@@ -29,7 +29,6 @@ The object of this module is to:
 + allow editing and creation of links within the context of the parent record
 + ~~have no Javascript dependencies, beyond those provided by core framework fields~~ (we tried)
 + act as a drop-in replacement for the LinkField provided by [gorriecoe/silverstripe-linkfield](https://github.com/gorriecoe/silverstripe-linkfield) (NB: **for has-one relations only**)
-+ **automatically publish** linked `File` and/or `SiteTree` relations when the parent record is published, via the Silverstripe ownership API
 
 
 ### Elemental inline editing
