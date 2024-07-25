@@ -17,7 +17,6 @@
     ],
     "require": {
         "codem/silverstripe-html5-inputs": "^0.1",
-        "fromholdio/silverstripe-externalurlfield" : "^1",
         "gorriecoe/silverstripe-link": "^1.0.0",
         "silverstripe/asset-admin": "^1"
     },
