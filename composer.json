@@ -17,7 +17,6 @@
     ],
     "require": {
         "codem/silverstripe-html5-inputs": "^0.1",
-        "fromholdio/silverstripe-externalurlfield" : "^1",
         "gorriecoe/silverstripe-link": "^1.0.0",
         "silverstripe/asset-admin": "^1"
     },
@@ -32,5 +31,14 @@
             "client/src/js",
             "client/static/styles"
         ]
+    },
+    "autoload": {
+        "psr-4": {
+            "NSWDPC\\InlineLinker\\": [
+                "src/Extensions/",
+                "src/Forms/"
+            ],
+            "NSWDPC\\InlineLinker\\Tests\\": "tests/"
+        }
     }
 }
