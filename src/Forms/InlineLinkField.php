@@ -735,6 +735,7 @@ class InlineLinkField extends CompositeField
                     "Leave empty for no link"
                 ),
             )->setValue($type)
+            ->addExtraClass('no-chosen') // avoid chosen being attached to this field, it is not required
             ->setEmptyString(''),// default to no link
 
             InlineLink_URLField::create(

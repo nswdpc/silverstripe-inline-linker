@@ -14,4 +14,4 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
     - vendor/nswdpc/silverstripe-inline-linker/client/static/styles/admin.css
   extra_requirements_javascript:
-    - vendor/nswdpc/silverstripe-inline-linker/client/dist/js/app.min.js
+    - vendor/nswdpc/silverstripe-inline-linker/client/src/js/app.js
