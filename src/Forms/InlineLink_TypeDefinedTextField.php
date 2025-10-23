@@ -5,12 +5,11 @@ namespace NSWDPC\InlineLinker;
 use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\DataObjectInterface;
 
-
 /**
  * This field handles any type of text entry link e.g URL, Email, Phone
  */
-class InlineLink_TypeDefinedTextField extends TextField {
-
+class InlineLink_TypeDefinedTextField extends TextField
+{
     use InlineLink;
 
     /**
@@ -37,7 +36,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
     #[\Override]
     public function validate(): \SilverStripe\Core\Validation\ValidationResult
     {
-        switch($this->getLinkType()) {
+        switch ($this->getLinkType()) {
             case InlineLinkField::LINKTYPE_EMAIL:
                 $field = InlineLink_EmailField::create(
                     $this->getName() . "_" . InlineLinkField::LINKTYPE_EMAIL,
@@ -82,7 +81,8 @@ class InlineLink_TypeDefinedTextField extends TextField {
      * Saving of this value happens in the {@link InlineLinkField}
      */
     #[\Override]
-    public function canSubmitValue() : bool {
+    public function canSubmitValue(): bool
+    {
         return false;
     }
 

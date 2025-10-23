@@ -7,8 +7,8 @@ use Codem\Utilities\HTML5\TelField;
 /**
  * Provide a phone number for association with a Link
  */
-class InlineLink_PhoneField extends TelField {
-
+class InlineLink_PhoneField extends TelField
+{
     use InlineLink;
 
     /**

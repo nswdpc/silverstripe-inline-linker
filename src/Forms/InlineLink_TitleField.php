@@ -5,8 +5,8 @@ namespace NSWDPC\InlineLinker;
 use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\DataObjectInterface;
 
-class InlineLink_TitleField extends TextField {
-
+class InlineLink_TitleField extends TextField
+{
     use InlineLink;
 
     /**
@@ -39,7 +39,8 @@ class InlineLink_TitleField extends TextField {
      * Saving of this value happens in the {@link InlineLinkField}
      */
     #[\Override]
-    public function canSubmitValue() : bool {
+    public function canSubmitValue(): bool
+    {
         return false;
     }
 

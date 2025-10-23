@@ -10,15 +10,17 @@ use SilverStripe\Core\Extension;
  * @author James
  * @extends \SilverStripe\Core\Extension<(\gorriecoe\Link\Models\Link & static)>
  */
-class LinkExtension extends Extension {
-
-    public function TitleWithURL(): string {
+class LinkExtension extends Extension
+{
+    public function TitleWithURL(): string
+    {
         $title = $this->getOwner()->Title;
         $url = $this->getOwner()->getLinkURL();
         return "#" . $this->getOwner()->ID . " " . $title . " - " . $url;
     }
 
-    public function TypeWithURL(): string {
+    public function TypeWithURL(): string
+    {
         $type = $this->getOwner()->Type;
         $url = $this->getOwner()->getLinkURL();
         return "#" . $this->getOwner()->ID . " " . $type . " - " . $url;

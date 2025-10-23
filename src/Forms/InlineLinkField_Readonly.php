@@ -10,7 +10,6 @@ use SilverStripe\Forms\ReadonlyField;
  */
 class InlineLinkField_Readonly extends ReadonlyField
 {
-
     /**
      * @var bool
      */
@@ -29,7 +28,8 @@ class InlineLinkField_Readonly extends ReadonlyField
     /**
      * Set the link record
      */
-    public function setRecord(Link $link) {
+    public function setRecord(Link $link)
+    {
         $this->linkRecord = $link;
     }
 
@@ -37,7 +37,8 @@ class InlineLinkField_Readonly extends ReadonlyField
      * Get the link record
      * @return null|Link
      */
-    public function getRecord() {
+    public function getRecord()
+    {
         return $this->linkRecord;
     }
 
@@ -48,7 +49,7 @@ class InlineLinkField_Readonly extends ReadonlyField
     public function Value()
     {
         $record = $this->getRecord();
-        if($record && ($record instanceof Link) && ($linkUrl = $record->getLinkURL())) {
+        if ($record && ($record instanceof Link) && ($linkUrl = $record->getLinkURL())) {
 
             // Get translated value of the link type
             $suffix = preg_replace("/[^a-zA-Z]/", "_", $record->Type);

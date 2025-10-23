@@ -7,8 +7,8 @@ use SilverStripe\AssetAdmin\Forms\UploadField;
 /**
  * Allow a file to be associated with a {@link gorriecoe\Link\Models\Link}
  */
-class InlineLink_FileField extends UploadField {
-
+class InlineLink_FileField extends UploadField
+{
     use InlineLink;
 
     protected $link_type = InlineLinkField::LINKTYPE_FILE;
