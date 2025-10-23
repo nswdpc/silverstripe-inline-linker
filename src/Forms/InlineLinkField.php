@@ -17,10 +17,10 @@ use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\Tip;
 use SilverStripe\Forms\SelectionGroup;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\SecurityToken;
 
 /**
@@ -543,10 +543,13 @@ class InlineLinkField extends CompositeField
      * @return boolean
      */
     public function hasInlineElementalParent() {
-        if(!is_null($this->parent_inline_editable)) {
+        if(!class_exists(BaseElement::class) || !class_exists(ElementalAreaController::class)) {
+            $this->parent_inline_editable = false;
+            return $this->parent_inline_editable;
+        } else if(!is_null($this->parent_inline_editable)) {
             // already detected
             return $this->parent_inline_editable;
-        } else if(!class_exists("\\DNADesign\\Elemental\\Models\\BaseElement")) {
+        } else if(!class_exists(BaseElement::class)) {
             // If there is no silverstripe-elemental module installed, then no need to check...
             $this->parent_inline_editable = false;
             return $this->parent_inline_editable;
@@ -807,28 +810,7 @@ class InlineLinkField extends CompositeField
                 ]
             ]),
 
-            CompositeField::create(
-                InlineLink_SiteTreeField::create(
-                    $this->prefixedFieldName(self::LINKTYPE_SITETREE),
-                    _t(
-                        "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
-                        'Choose a page on this website or type to start searching'
-                    ),
-                    SiteTree::class
-                )->setValue(
-                    $record->SiteTreeID ?: null
-                ),
-                // ensure we have a signal field
-                SignallerField::create(
-                    "signaller_for_" . $this->prefixedFieldName(self::LINKTYPE_SITETREE)
-                )->setSignals([
-                    [
-                        'containerSelector' => '.composite.form-group--no-label',
-                        'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
-                        'value' => [ self::LINKTYPE_SITETREE  ]
-                    ]
-                ])
-            ),
+            
 
             CompositeField::create(
                 InlineLink_FileField::create(
@@ -851,6 +833,33 @@ class InlineLinkField extends CompositeField
             )
 
         );
+
+        if(class_exists(SiteTree::class)) {
+            $fields->push(
+                CompositeField::create(
+                    InlineLink_SiteTreeField::create(
+                        $this->prefixedFieldName(self::LINKTYPE_SITETREE),
+                        _t(
+                            "NSWDPC\\InlineLinker\\InlineLinkField.CHOOSE_PAGE_ON_THIS_WEBSITE",
+                            'Choose a page on this website or type to start searching'
+                        ),
+                        SiteTree::class
+                    )->setValue(
+                        $record->SiteTreeID ?: null
+                    ),
+                    // ensure we have a signal field
+                    SignallerField::create(
+                        "signaller_for_" . $this->prefixedFieldName(self::LINKTYPE_SITETREE)
+                    )->setSignals([
+                        [
+                            'containerSelector' => '.composite.form-group--no-label',
+                            'triggerElement' => $this->getTriggerElement(self::FIELD_NAME_TYPE),
+                            'value' => [ self::LINKTYPE_SITETREE  ]
+                        ]
+                    ])
+                )
+            );
+        }
 
         $this->extend('updateLinkFields', $fields);
 
