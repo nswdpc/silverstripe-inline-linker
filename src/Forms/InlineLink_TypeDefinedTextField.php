@@ -33,7 +33,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
     /**
      * @inheritdoc
      */
-    public function validate($validator)
+    public function validate(): \SilverStripe\Core\Validation\ValidationResult
     {
         switch($this->getLinkType()) {
             case InlineLinkField::LINKTYPE_EMAIL:
@@ -42,7 +42,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
                     InlineLinkField::LINKTYPE_EMAIL,
                     $this->dataValue()
                 );
-                $result = $field->validate($validator);
+                $validationResult = $field->validate();
                 break;
             case InlineLinkField::LINKTYPE_PHONE:
                 $field = InlineLink_PhoneField::create(
@@ -50,7 +50,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
                     InlineLinkField::LINKTYPE_PHONE,
                     $this->dataValue()
                 );
-                $result = $field->validate($validator);
+                $validationResult = $field->validate();
                 break;
             case InlineLinkField::LINKTYPE_URL:
                 $field = InlineLink_URLField::create(
@@ -58,13 +58,13 @@ class InlineLink_TypeDefinedTextField extends TextField {
                     InlineLinkField::LINKTYPE_URL,
                     $this->dataValue()
                 );
-                $result = $field->validate($validator);
+                $validationResult = $field->validate();
                 break;
             default:
-                $result = true;
+                $validationResult = \SilverStripe\Core\Validation\ValidationResult::create();
                 break;
         }
-        return $result;
+        return $validationResult;
     }
 
     /**

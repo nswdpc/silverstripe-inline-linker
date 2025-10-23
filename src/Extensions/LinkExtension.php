@@ -2,14 +2,14 @@
 
 namespace NSWDPC\InlineLinker;
 
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 
 /**
  * Extension for {@link gorriecoe\Link\Models\Link} providing additional methods
  * and behaviour
  * @author James
  */
-class LinkExtension extends DataExtension {
+class LinkExtension extends Extension {
 
     public function TitleWithURL() {
         $title = $this->owner->Title;
