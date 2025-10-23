@@ -492,9 +492,8 @@ class InlineLinkField extends CompositeField
 
     /**
      * Get the current link record, if any
-     * @return mixed null|\gorriecoe\Link\Models\Link
      */
-    public function getRecord(): ?\gorriecoe\Link\Models\Link {
+    public function getRecord(): ?Link {
         return $this->record;
     }
 
