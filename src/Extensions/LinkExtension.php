@@ -8,19 +8,20 @@ use SilverStripe\Core\Extension;
  * Extension for {@link gorriecoe\Link\Models\Link} providing additional methods
  * and behaviour
  * @author James
+ * @extends \SilverStripe\Core\Extension<(\gorriecoe\Link\Models\Link & static)>
  */
 class LinkExtension extends Extension {
 
-    public function TitleWithURL() {
-        $title = $this->owner->Title;
-        $url = $this->owner->getLinkURL();
-        return "#" . $this->owner->ID . " " . $title . " - " . $url;
+    public function TitleWithURL(): string {
+        $title = $this->getOwner()->Title;
+        $url = $this->getOwner()->getLinkURL();
+        return "#" . $this->getOwner()->ID . " " . $title . " - " . $url;
     }
 
-    public function TypeWithURL() {
-        $type = $this->owner->Type;
-        $url = $this->owner->getLinkURL();
-        return "#" . $this->owner->ID . " " . $type . " - " . $url;
+    public function TypeWithURL(): string {
+        $type = $this->getOwner()->Type;
+        $url = $this->getOwner()->getLinkURL();
+        return "#" . $this->getOwner()->ID . " " . $type . " - " . $url;
     }
 
 }

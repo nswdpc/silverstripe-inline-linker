@@ -24,7 +24,7 @@ class InlineLinkField_Readonly extends ReadonlyField
     /**
      * @var null|Link
      */
-    protected $linkRecord = null;
+    protected $linkRecord;
 
     /**
      * Set the link record
@@ -79,6 +79,7 @@ class InlineLinkField_Readonly extends ReadonlyField
     /**
      * @return string
      */
+    #[\Override]
     public function getValueCast()
     {
         return 'Text';

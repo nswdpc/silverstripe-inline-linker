@@ -25,6 +25,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
      */
     protected $link_type = '';
 
+    #[\Override]
     public function Type()
     {
         return 'text';
@@ -33,6 +34,7 @@ class InlineLink_TypeDefinedTextField extends TextField {
     /**
      * @inheritdoc
      */
+    #[\Override]
     public function validate(): \SilverStripe\Core\Validation\ValidationResult
     {
         switch($this->getLinkType()) {
@@ -64,20 +66,22 @@ class InlineLink_TypeDefinedTextField extends TextField {
                 $validationResult = \SilverStripe\Core\Validation\ValidationResult::create();
                 break;
         }
+
         return $validationResult;
     }
 
     /**
      * Saving of this value happens in the {@link InlineLinkField}
      */
+    #[\Override]
     public function saveInto(DataObjectInterface $record)
     {
-        return;
     }
 
     /**
      * Saving of this value happens in the {@link InlineLinkField}
      */
+    #[\Override]
     public function canSubmitValue() : bool {
         return false;
     }

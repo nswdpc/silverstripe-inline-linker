@@ -29,18 +29,17 @@ class SignallerField extends LiteralField {
      *
      * @return string
      */
+    #[\Override]
     public function FieldHolder($properties = [])
     {
         return $this->getContent();
     }
 
+    #[\Override]
     public function getContent() {
         $signals = $this->getSignals();
-        if($signals) {
-            $signals = htmlspecialchars(json_encode($signals));
-        } else {
-            $signals = "";
-        }
+        $signals = $signals ? htmlspecialchars(json_encode($signals)) : "";
+
         $name = htmlspecialchars($this->getName());
         return "<input id=\"{$name}\" type=\"hidden\" data-signals=\"{$signals}\">";
     }

@@ -14,6 +14,7 @@ class InlineLink_SiteTreeField extends TreeDropdownField {
     /**
      * This subclass only allows SiteTree::class as the source object
      */
+    #[\Override]
     public function setSourceObject($class)
     {
         if(class_exists(SiteTree::class)) {
@@ -21,12 +22,14 @@ class InlineLink_SiteTreeField extends TreeDropdownField {
         } else {
             $this->sourceObject = null;
         }
+
         return $this;
     }
 
     /**
      * This subclass only allows SiteTree::class as the source object
      */
+    #[\Override]
     public function getSourceObject()
     {
         if(class_exists(SiteTree::class)) {
@@ -34,6 +37,7 @@ class InlineLink_SiteTreeField extends TreeDropdownField {
         } else {
             $this->sourceObject = null;
         }
+
         return parent::getSourceObject();
     }
 

@@ -28,14 +28,15 @@ class InlineLink_OpenInNewWindowField extends CheckboxField {
     /**
      * Saving of this value happens in the {@link InlineLinkField}
      */
+    #[\Override]
     public function saveInto(DataObjectInterface $record)
     {
-        return;
     }
 
     /**
      * Saving of this value happens in the {@link InlineLinkField}
      */
+    #[\Override]
     public function canSubmitValue() : bool {
         return false;
     }

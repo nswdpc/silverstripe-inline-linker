@@ -12,9 +12,6 @@ trait InlineLink {
      */
     protected $signals = [];
 
-    /**
-     * @return string
-     */
     public function getLinkType() : string {
         return $this->link_type ?: '';
     }
@@ -41,6 +38,7 @@ trait InlineLink {
         if(!empty($signals)) {
             $data['attributes'][ 'data-signals' ] = json_encode($signals);
         }
+
         return $data;
     }
 

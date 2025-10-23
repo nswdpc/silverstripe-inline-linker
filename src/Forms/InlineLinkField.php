@@ -48,7 +48,7 @@ class InlineLinkField extends CompositeField
      * If true, handle field namespacing, prefixing and replacement of [] in fieldnames etc.
      * @var boolean|null
      */
-    protected $parent_inline_editable = null;
+    protected $parent_inline_editable;
 
     /**
      * @var TextField
@@ -81,15 +81,23 @@ class InlineLinkField extends CompositeField
     const FIELD_NAME_TYPE_SEPARATOR = "___";
 
     const FIELD_NAME_REMOVELINK = "RemoveLink";
+
     const FIELD_NAME_TITLE = "Title";
+
     const FIELD_NAME_OPEN_IN_NEW_WINDOW = "OpenInNewWindow";
+
     const FIELD_NAME_TYPE = "Type";
 
     const LINKTYPE_EMAIL = 'Email';
+
     const LINKTYPE_URL = 'URL';
+
     const LINKTYPE_SITETREE = 'SiteTree';
+
     const LINKTYPE_PHONE = 'Phone';
+
     const LINKTYPE_FILE = 'File';
+
     const LINKTYPE_TYPEDEFINED = 'BasedOnType';
 
     public function __construct($name, $title, DataObject $parent) {
@@ -107,7 +115,8 @@ class InlineLinkField extends CompositeField
         $this->name = $name;
         $this->title = $title;
         // initialise record and parent
-        $this->parent = $this->record = null;
+        $this->parent = null;
+        $this->record = null;
         $component = $parent->getComponent($name);
         if(!($component instanceof Link)) {
             throw new \InvalidArgumentException(_t(
@@ -209,6 +218,7 @@ class InlineLinkField extends CompositeField
      * @param array|DataObject $data
      * @return $this
      */
+    #[\Override]
     public function setSubmittedValue($values, $data = null)
     {
 
@@ -226,8 +236,9 @@ class InlineLinkField extends CompositeField
             $post = $request->requestVars();
             // Check security token
             if (!SecurityToken::inst()->checkRequest($request)) {
-                throw new ValidationException( "Failed security token check" );
+                throw \SilverStripe\Core\Validation\ValidationException::create("Failed security token check");
             }
+
             // De-namespace the posted values
             $values = [];
             $values_all = ElementalAreaController::removeNamespacesFromFields($post, $this->parent->ID);
@@ -245,7 +256,7 @@ class InlineLinkField extends CompositeField
 
         if(!is_array($values)) {
             // cannot proceed unless we have some values
-            throw new ValidationException(_t(
+            throw \SilverStripe\Core\Validation\ValidationException::create(_t(
                 "NSWDPC\\InlineLinker\\InlineLinkField.NO_VALUES_SUPPLIED_SAVE",
                 "No values were supplied to save"
             ));
@@ -262,13 +273,13 @@ class InlineLinkField extends CompositeField
 
         // set submitted values
         foreach($values as $index => $value) {
-            if($index == self::FIELD_NAME_TITLE) {
+            if ($index == self::FIELD_NAME_TITLE) {
                 // handle title field
                 $this->getTitleField()->setSubmittedValue( $value );
-            } else if($index == self::FIELD_NAME_OPEN_IN_NEW_WINDOW) {
+            } elseif ($index == self::FIELD_NAME_OPEN_IN_NEW_WINDOW) {
                 // handle open in new window field
                 $this->getOpenInNewWindowField()->setSubmittedValue( $value );
-            } else if($field = $this->children->dataFieldByName( $this->prefixedFieldName( $index ) )) {
+            } elseif ($field = $this->children->dataFieldByName( $this->prefixedFieldName( $index ) )) {
                 // set the submitted value on the relevant field
                 $field->setSubmittedValue( $value );
             }
@@ -277,10 +288,7 @@ class InlineLinkField extends CompositeField
         return  $this;
     }
 
-    /**
-     * @param InlineLink_TitleField $field
-     */
-    public function setTitleField(InlineLink_TitleField $field) {
+    public function setTitleField(InlineLink_TitleField $field): static {
         $this->title_field = $field;
         return $this;
     }
@@ -292,10 +300,7 @@ class InlineLinkField extends CompositeField
         return $this->title_field;
     }
 
-    /**
-     * @param InlineLink_OpenInNewWindowField $field
-     */
-    public function setOpenInNewWindowField(InlineLink_OpenInNewWindowField $field) {
+    public function setOpenInNewWindowField(InlineLink_OpenInNewWindowField $field): static {
         $this->open_in_new_window_field = $field;
         return $this;
     }
@@ -307,10 +312,7 @@ class InlineLinkField extends CompositeField
         return $this->open_in_new_window_field;
     }
 
-    /**
-     * @param InlineLink_RemoveAction $field
-     */
-    public function setRemoveField(InlineLink_RemoveAction $field) {
+    public function setRemoveField(InlineLink_RemoveAction $field): static {
         $this->remove_field = $field;
         return $this;
     }
@@ -332,10 +334,12 @@ class InlineLinkField extends CompositeField
     /**
      * This field handles data
      */
+    #[\Override]
     public function hasData() {
         return true;
     }
 
+    #[\Override]
     public function canSubmitValue() : bool {
         return true;
     }
@@ -343,40 +347,37 @@ class InlineLinkField extends CompositeField
     /**
      * This field handles all the saving
      */
+    #[\Override]
     public function collateDataFields(&$list, $saveableOnly = false)
     {
-        return;
     }
 
     /**
      * {@inheritdoc}
      */
+    #[\Override]
     public function saveInto(DataObjectInterface $record)
     {
 
         // handle removal
         $remove_field = $this->getRemoveField();
-        if($remove_field
-            && ($remove_field->dataValue() == 1)
-            && ($link = $this->getRecord())
-        ) {
-            if($link && $link->exists()) {
-                // clear all field submitted
-                // avoids re-display with data
-                foreach($this->children->dataFields() as $field) {
-                    $field->setSubmittedValue(null);
-                }
-                $link->delete();
-                // do not proceed
-                return;
+        if ($remove_field && $remove_field->dataValue() == 1 && ($link = $this->getRecord()) && ($link && $link->exists())) {
+            // clear all field submitted
+            // avoids re-display with data
+            foreach($this->children->dataFields() as $field) {
+                $field->setSubmittedValue(null);
             }
+
+            $link->delete();
+            // do not proceed
+            return;
         }
 
         // @var FormField
         $type_field = $this->children->dataFieldByName( $this->prefixedFieldName( self::FIELD_NAME_TYPE ) );
         // no type field
         if(!$type_field) {
-            throw new ValidationException(_t(
+            throw \SilverStripe\Core\Validation\ValidationException::create(_t(
                 "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_TYPE_FIELD_ERROR",
                 "The link type could not be determined or is unknown"
             ));
@@ -397,7 +398,7 @@ class InlineLinkField extends CompositeField
         }
 
         if(!$value_field) {
-            throw new ValidationException(_t(
+            throw \SilverStripe\Core\Validation\ValidationException::create(_t(
                 "NSWDPC\\InlineLinker\\InlineLinkField.NO_LINK_VALUE_ERROR",
                 "A value for the link could not be found"
             ));
@@ -412,6 +413,7 @@ class InlineLinkField extends CompositeField
         if($open_in_new_window_field = $this->getOpenInNewWindowField()) {
             $open_in_new_window = $open_in_new_window_field->dataValue();
         }
+
         if($title_field = $this->getTitleField()) {
             $title = $title_field->dataValue();
         }
@@ -437,7 +439,6 @@ class InlineLinkField extends CompositeField
      * Create or save a link using the value from the form field
      * @param string $type eg. 'Email'
      * @param FormField $field the Form field holding the data related to the type
-     * @return Link
      */
     protected function createOrAssociateLink(string $type, FormField $field) : Link {
         $value = $field->dataValue();
@@ -465,6 +466,7 @@ class InlineLinkField extends CompositeField
                 if(is_array($id_list)) {
                     $file_id = reset($id_list);
                 }
+
                 $data = [
                     'FileID' => $file_id,
                     'Type' => $type
@@ -489,14 +491,13 @@ class InlineLinkField extends CompositeField
                 ];
                 break;
             default:
-                throw new ValidationException(_t(
+                throw \SilverStripe\Core\Validation\ValidationException::create(_t(
                     "NSWDPC\\InlineLinker\\InlineLinkField.UNHANDLED_LINK_TYPE_ERROR",
                     "The link of the type '{type}' cannot be saved'",
                     [
                         'type' => $type
                     ]
                 ));
-                break;
         }
 
         // apply data over defaults
@@ -512,6 +513,7 @@ class InlineLinkField extends CompositeField
             // new, create a new link
             $link = Link::create($data);
         }
+
         return $link;
     }
 
@@ -532,7 +534,6 @@ class InlineLinkField extends CompositeField
 
     /**
      * Returns whether the type passed in as the current Link.Type
-     * @return bool
      */
     protected function isTypeCurrent($type) : bool {
         return !empty($this->record->Type) && $this->record->Type == $type;
@@ -543,13 +544,13 @@ class InlineLinkField extends CompositeField
      * @return boolean
      */
     public function hasInlineElementalParent() {
-        if(!class_exists(BaseElement::class) || !class_exists(ElementalAreaController::class)) {
+        if (!class_exists(BaseElement::class) || !class_exists(ElementalAreaController::class)) {
             $this->parent_inline_editable = false;
             return $this->parent_inline_editable;
-        } else if(!is_null($this->parent_inline_editable)) {
+        } elseif (!is_null($this->parent_inline_editable)) {
             // already detected
             return $this->parent_inline_editable;
-        } else if(!class_exists(BaseElement::class)) {
+        } elseif (!class_exists(BaseElement::class)) {
             // If there is no silverstripe-elemental module installed, then no need to check...
             $this->parent_inline_editable = false;
             return $this->parent_inline_editable;
@@ -565,9 +566,8 @@ class InlineLinkField extends CompositeField
     /**
      * Return a prefixed field name, eg. LinkTarget[Email]
      * @param string $index eg. Email, Type, OpenInNewWindow...
-     * @return string
      */
-    public function prefixedFieldName($index) {
+    public function prefixedFieldName(string $index): string {
         if($this->hasInlineElementalParent()) {
             /*
              * Cannot use index notation due to
@@ -589,53 +589,53 @@ class InlineLinkField extends CompositeField
      * If the parent is an inline editable element, take that into account
      * @return string
      */
-    protected function getIndexFromName($complete_field_name) {
+    protected function getIndexFromName($complete_field_name): string|int|null {
         $index = "";
         if($this->hasInlineElementalParent()) {
             // the field name should start with the prefix...
-            if(strpos($complete_field_name, $this->getName() . self::FIELD_NAME_TYPE_SEPARATOR) !== 0) {
+            if(!str_starts_with((string) $complete_field_name, $this->getName() . self::FIELD_NAME_TYPE_SEPARATOR)) {
                 // invalid field name
                 return "";
             }
+
             // Get type using separator
-            $parts = explode(self::FIELD_NAME_TYPE_SEPARATOR, $complete_field_name);
+            $parts = explode(self::FIELD_NAME_TYPE_SEPARATOR, (string) $complete_field_name);
             // 0=parentname 1=type eg. LinkTarget__Index
-            $index = isset($parts[1]) ? $parts[1] : '';
+            $index = $parts[1] ?? '';
             return $index;
         } else {
             // Non inline_editable elements or standard modeladmin, using field[index] naming
             $result = [];
             $name = $this->getName();
-            parse_str($complete_field_name, $results);
+            parse_str((string) $complete_field_name, $results);
             if(isset($results[ $name ])) {
                 $target = $results[ $name ];
                 $index = key($target);
             }
+
             return $index;
         }
     }
 
     /**
      * Return the title of the current record
-     * @return string
      */
-    public function getRecordTitle() {
+    public function getRecordTitle(): string {
         $record = $this->getRecord();
-        $title = trim($record->Title ?? '');
-        return $title;
+        return trim($record->Title ?? '');
     }
 
 
     /**
      * Return the OpenInNewWindow value of the current record
-     * @return int
      */
-    public function getRecordOpenInNewWindow() {
+    public function getRecordOpenInNewWindow(): int {
         $record = $this->getRecord();
         $value = 0;
         if($record && $record->isInDB()) {
             $value = ($record->OpenInNewWindow == 1 ? 1: 0);
         }
+
         return $value;
     }
 
@@ -651,14 +651,12 @@ class InlineLinkField extends CompositeField
      * @return mixed null|LiteralField
      */
     public function getCurrentLinkField() {
-        $field = $this->getCurrentLinkTemplate();
-        return $field;
+        return $this->getCurrentLinkTemplate();
     }
 
     /**
      * Returns whether a current link exists and it is valid
      * A valid Link record has a Type value and a URL
-     * @return bool
      */
     public function hasCurrentLink() : bool {
         return $this->record
@@ -680,13 +678,13 @@ class InlineLinkField extends CompositeField
                 $html
             );
         }
+
         return $field;
     }
 
     /**
      * Return all available Link Fields
      * Modify fields via the updateLinkFields extension method
-     * @return CompositeField
      */
     public function getLinkFields() : CompositeField {
 
@@ -700,20 +698,12 @@ class InlineLinkField extends CompositeField
             $file_list = ArrayList::create();
             $file_list->push( $record->File() );
             // Retrieve the link value, based on the record type
-            switch($record->Type) {
-                case self::LINKTYPE_URL:
-                    $value = $record->URL;
-                    break;
-                case self::LINKTYPE_EMAIL:
-                    $value = $record->Email;
-                    break;
-                case self::LINKTYPE_PHONE:
-                    $value = $record->Phone;
-                    break;
-                default:
-                    $value = '';
-                    break;
-            }
+            $value = match ($record->Type) {
+                self::LINKTYPE_URL => $record->URL,
+                self::LINKTYPE_EMAIL => $record->Email,
+                self::LINKTYPE_PHONE => $record->Phone,
+                default => '',
+            };
         }
 
         $fields = CompositeField::create(
@@ -810,7 +800,7 @@ class InlineLinkField extends CompositeField
                 ]
             ]),
 
-            
+
 
             CompositeField::create(
                 InlineLink_FileField::create(
@@ -882,10 +872,11 @@ class InlineLinkField extends CompositeField
      * Returns a readonly version of this field
      * @return InlineLinkField_Readonly
      */
+    #[\Override]
     public function performReadonlyTransformation()
     {
-        $title = $this->title ? $this->title : $this->getLegend();
-        $field = new InlineLinkField_Readonly($this->name, $title);
+        $title = $this->title ?: $this->getLegend();
+        $field = \NSWDPC\InlineLinker\InlineLinkField_Readonly::create($this->name, $title);
         $field->setRecord( $this->getRecord() );
         $field->setForm($this->form);
         return $field;
