@@ -35,6 +35,9 @@
         "phpunit/phpunit": "^11.5",
         "rector/rector": "^2"
     },
+    "suggest" : {
+        "silverstripe/cms" : "SiteTree link support"
+    },
     "extra": {
         "expose": [
             "client/src/js",
