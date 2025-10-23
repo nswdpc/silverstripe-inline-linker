@@ -374,11 +374,11 @@ class InlineLinkField extends CompositeField
             "NSWDPC\\InlineLinker\\InlineLinkField.AUTO_TITLE",
             "Auto-created title for a link in " . $this->parent->getTitle()
         );
-        if($open_in_new_window_field = $this->getOpenInNewWindowField()) {
+        if(($open_in_new_window_field = $this->getOpenInNewWindowField()) instanceof \NSWDPC\InlineLinker\InlineLink_OpenInNewWindowField) {
             $open_in_new_window = $open_in_new_window_field->dataValue();
         }
 
-        if($title_field = $this->getTitleField()) {
+        if(($title_field = $this->getTitleField()) instanceof \NSWDPC\InlineLinker\InlineLink_TitleField) {
             $title = $title_field->dataValue();
         }
 
@@ -427,6 +427,7 @@ class InlineLinkField extends CompositeField
                 if($field instanceof InlineLink_FileField) {
                     $id_list = $field->getItemIDs();
                 }
+
                 $file_id = 0;//TODO error?
                 if(is_array($id_list)) {
                     $file_id = reset($id_list);
@@ -493,7 +494,7 @@ class InlineLinkField extends CompositeField
      * Get the current link record, if any
      * @return mixed null|\gorriecoe\Link\Models\Link
      */
-    public function getRecord() {
+    public function getRecord(): ?\gorriecoe\Link\Models\Link {
         return $this->record;
     }
 
@@ -506,9 +507,8 @@ class InlineLinkField extends CompositeField
 
     /**
      * Determine whether the parent of this field is an elemental element
-     * @return boolean
      */
-    public function hasInlineElementalParent() {
+    public function hasInlineElementalParent(): bool {
         if (!class_exists(BaseElement::class) || !class_exists(ElementalAreaController::class)) {
             $this->parent_inline_editable = false;
             return $this->parent_inline_editable;
@@ -634,7 +634,7 @@ class InlineLinkField extends CompositeField
      * Return a literal field template for the current link
      * @return mixed null|LiteralField
      */
-    protected function getCurrentLinkTemplate($name = "ExistingLinkRecord") {
+    protected function getCurrentLinkTemplate(string $name = "ExistingLinkRecord") {
         $field = null;
         if($this->hasCurrentLink()) {
             $html = $this->record->renderWith('NSWDPC/InlineLinker/CurrentLinkTemplate');
@@ -825,7 +825,7 @@ class InlineLinkField extends CompositeField
      * Return the element name that will trigger the signals on change
      * The trigger element name must be namespaced
      */
-    protected function getTriggerElement($name) : string {
+    protected function getTriggerElement(string $name) : string {
         if(class_exists(EditFormFactory::class) && ($inline = $this->hasInlineElementalParent())) {
             return sprintf(EditFormFactory::FIELD_NAMESPACE_TEMPLATE, $this->parent->ID, $this->prefixedFieldName($name));
         } else {
