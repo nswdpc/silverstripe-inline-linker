@@ -22,7 +22,7 @@
         }
     ],
     "require": {
-        "codem/silverstripe-html5-inputs": "dev-ss6",
+        "codem/silverstripe-html5-inputs": "^2",
         "gorriecoe/silverstripe-link": "dev-ss6",
         "silverstripe/asset-admin": "^3"
     },
