@@ -67,4 +67,6 @@
             "phpstan/extension-installer": true
         }
     }
+    "prefer-stable": true,
+    "minimum-stability": "dev"
 }
