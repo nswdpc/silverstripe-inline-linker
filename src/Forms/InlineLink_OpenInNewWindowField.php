@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\InlineLinker;
 
 use SilverStripe\Forms\CheckboxField;
@@ -17,14 +19,6 @@ class InlineLink_OpenInNewWindowField extends CheckboxField
      * @var string
      */
     protected $link_type = '';
-
-    /**
-     * @inheritdoc
-     */
-    public function __construct($name, $title = null, $value = null)
-    {
-        parent::__construct($name, $title, $value);
-    }
 
     /**
      * Saving of this value happens in the {@link InlineLinkField}

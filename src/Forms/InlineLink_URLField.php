@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\InlineLinker;
 
 use Codem\Utilities\HTML5\UrlField;
