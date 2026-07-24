@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\InlineLinker;
 
 use Codem\Utilities\HTML5\EmailField;
@@ -7,8 +9,8 @@ use Codem\Utilities\HTML5\EmailField;
 /**
  * An email field
  */
-class InlineLink_EmailField extends EmailField {
-
+class InlineLink_EmailField extends EmailField
+{
     use InlineLink;
 
     /**

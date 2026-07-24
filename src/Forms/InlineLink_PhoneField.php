@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\InlineLinker;
 
 use Codem\Utilities\HTML5\TelField;
@@ -7,8 +9,8 @@ use Codem\Utilities\HTML5\TelField;
 /**
  * Provide a phone number for association with a Link
  */
-class InlineLink_PhoneField extends TelField {
-
+class InlineLink_PhoneField extends TelField
+{
     use InlineLink;
 
     /**
