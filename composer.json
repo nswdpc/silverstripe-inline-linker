@@ -15,15 +15,9 @@
             "role" : "Developer"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/nswdpc/silverstripe-link.git"
-        }
-    ],
     "require": {
         "codem/silverstripe-html5-inputs": "^2",
-        "gorriecoe/silverstripe-link": "dev-ss6",
+        "nswdpc/silverstripe-link": "^2",
         "silverstripe/asset-admin": "^3"
     },
     "require-dev": {
@@ -66,5 +60,7 @@
             "silverstripe/recipe-plugin": true,
             "phpstan/extension-installer": true
         }
-    }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
 }
