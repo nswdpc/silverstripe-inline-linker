@@ -40,7 +40,7 @@ class SignallerField extends LiteralField
     public function getContent()
     {
         $signals = $this->getSignals();
-        $signals = $signals ? htmlspecialchars(json_encode($signals)) : "";
+        $signals = $signals !== [] ? htmlspecialchars(json_encode($signals)) : "";
 
         $name = htmlspecialchars($this->getName());
         return "<input id=\"{$name}\" type=\"hidden\" data-signals=\"{$signals}\">";
